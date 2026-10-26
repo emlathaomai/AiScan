@@ -257,14 +257,71 @@ class MeatFreshnessAnalyzer:
             "model_mode": self.model_mode
         }
 
+    def detect_ice_and_discoloration(self, img_pil: Image.Image) -> Dict[str, Any]:
+        """
+        OpenCV HSV mask detector for ice frost (white_ratio) and dark spoilage discoloration (dark_ratio).
+        - White mask: H: 0-180, S: 0-50, V: 200-255 (Frost/Ice crystals/Freezer burn)
+        - Dark mask: H: 0-180, S: 0-255, V: 0-80 (Severe dark discoloration/Spoilage)
+        """
+        try:
+            import cv2
+            img_np = np.array(img_pil)
+            if len(img_np.shape) == 2:
+                img_bgr = cv2.cvtColor(img_np, cv2.COLOR_GRAY2BGR)
+            elif img_np.shape[2] == 4:
+                img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGBA2BGR)
+            else:
+                img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+            hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+
+            # Phát hiện các mảng màu trắng (đá tuyết/cháy đông)
+            lower_white = np.array([0, 0, 200])
+            upper_white = np.array([180, 50, 255])
+            white_mask = cv2.inRange(hsv, lower_white, upper_white)
+            white_ratio = float(np.sum(white_mask == 255) / white_mask.size)
+
+            # Phát hiện màu tối/sẫm (thịt ươn/hỏng)
+            lower_dark = np.array([0, 0, 0])
+            upper_dark = np.array([180, 255, 80])
+            dark_mask = cv2.inRange(hsv, lower_dark, upper_dark)
+            dark_ratio = float(np.sum(dark_mask == 255) / dark_mask.size)
+
+            verdict = None
+            if white_ratio > 0.15:
+                verdict = "Frozen-Damaged (Phát hiện lớp đá tuyết hoặc mảng cháy đông > 15%)"
+            elif dark_ratio > 0.40:
+                verdict = "Spoiled (Phát hiện diện tích thịt thâm sẫm biến chất > 40%)"
+
+            return {
+                "white_ratio_pct": round(white_ratio * 100.0, 1),
+                "dark_ratio_pct": round(dark_ratio * 100.0, 1),
+                "white_threshold_exceeded": bool(white_ratio > 0.15),
+                "dark_threshold_exceeded": bool(dark_ratio > 0.40),
+                "guardrail_verdict": verdict
+            }
+        except Exception as e:
+            print(f"[MeatGuard] OpenCV inspection warning: {e}")
+            return {
+                "white_ratio_pct": 0.0,
+                "dark_ratio_pct": 0.0,
+                "white_threshold_exceeded": False,
+                "dark_threshold_exceeded": False,
+                "guardrail_verdict": None
+            }
+
     def analyze(self, image: Image.Image, meat_hint: Optional[str] = None) -> Dict[str, Any]:
         """
         Execute end-to-end analysis on the provided PIL Image.
+        Ensembles Deep Learning ONNX inference with OpenCV Ice & Discoloration Guardrails.
         """
         start_time = time.time()
         resized_img, normalized_np = self.preprocess_image(image)
 
-        # Check if neural model is available
+        # 1. Run OpenCV Ice and Dark Discoloration Inspection
+        cv_inspection = self.detect_ice_and_discoloration(resized_img)
+
+        # 2. Check if neural model is available
         if self.model_mode == "onnx_model" and self.model is not None:
             try:
                 input_tensor = np.transpose(normalized_np, (2, 0, 1))[np.newaxis, ...].astype(np.float32)
@@ -275,6 +332,22 @@ class MeatFreshnessAnalyzer:
                 # Softmax across 4 classes
                 exp_logits = np.exp(logits - np.max(logits))
                 probs = exp_logits / np.sum(exp_logits)
+
+                # Fuse OpenCV Guardrails:
+                # If OpenCV detects significant frost (>15%) and model didn't catch it, boost frozen_damaged
+                if cv_inspection["white_threshold_exceeded"] and probs[2] < 0.60:
+                    probs[2] = max(probs[2], 0.85)
+                    rem = (1.0 - probs[2]) / 3.0
+                    probs[0], probs[1], probs[3] = rem, rem, rem
+
+                # If OpenCV detects severe dark discoloration (>40%), boost spoiled
+                if cv_inspection["dark_threshold_exceeded"] and probs[3] < 0.60:
+                    probs[3] = max(probs[3], 0.88)
+                    rem = (1.0 - probs[3]) / 3.0
+                    probs[0], probs[1], probs[2] = rem, rem, rem
+
+                # Re-normalize
+                probs = probs / np.sum(probs)
 
                 top_idx = int(np.argmax(probs))
                 status = self.classes[top_idx]
@@ -301,6 +374,7 @@ class MeatFreshnessAnalyzer:
                     status, confidence_pct, prob_dict, detected_meat,
                     r_mean, g_mean, b_mean, h_val * 360.0, s_val, v_val, rg_ratio
                 )
+                result["cv_inspection"] = cv_inspection
                 result["model_mode"] = "onnx_model"
                 result["inference_time_ms"] = round((time.time() - start_time) * 1000, 1)
                 return result
@@ -309,5 +383,6 @@ class MeatFreshnessAnalyzer:
 
         # Fallback heuristic
         result = self._infer_with_heuristic(resized_img, meat_hint)
+        result["cv_inspection"] = cv_inspection
         result["inference_time_ms"] = round((time.time() - start_time) * 1000, 1)
         return result

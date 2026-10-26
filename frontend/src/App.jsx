@@ -224,6 +224,17 @@ export default function App() {
               ? 'Trung bình (Mất phẩm chất và vị ngọt)'
               : 'Nguy hiểm (Tuyệt đối không ăn)'
           },
+          cv_inspection: {
+            white_ratio_pct: status === 'frozen_damaged' ? 24.6 : 3.2,
+            dark_ratio_pct: status === 'spoiled' ? 46.8 : 8.1,
+            white_threshold_exceeded: status === 'frozen_damaged',
+            dark_threshold_exceeded: status === 'spoiled',
+            guardrail_verdict: status === 'frozen_damaged'
+              ? 'Frozen-Damaged (Phát hiện lớp đá tuyết hoặc mảng cháy đông > 15%)'
+              : status === 'spoiled'
+              ? 'Spoiled (Phát hiện diện tích thịt thâm sẫm biến chất > 40%)'
+              : null
+          },
           model_mode: 'client_fallback_mode',
           inference_time_ms: 680
         });
