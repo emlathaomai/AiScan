@@ -28,12 +28,12 @@ export default function GuideModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn transition-opacity duration-200">
       {/* Click outside backdrop to close */}
       <div className="absolute inset-0" onClick={handleClose} />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] z-10 animate-scaleUp">
+      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] z-10 animate-modalIn transition-all duration-300 will-change-transform">
         {/* Modal Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/70 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
@@ -41,11 +41,8 @@ export default function GuideModal({ isOpen, onClose }) {
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
+              <h3 className="text-sm sm:text-base font-bold text-white">
                 Giấy Chỉ Thị An Toàn Thực Phẩm
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  Bắp Cải Tím
-                </span>
               </h3>
               <p className="text-[11px] text-slate-400">
                 Hướng dẫn sử dụng & đối chiếu kết quả pH tự nhiên
@@ -55,21 +52,21 @@ export default function GuideModal({ isOpen, onClose }) {
 
           <button
             onClick={handleClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition-all duration-200 active:scale-90"
             title="Đóng popup"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Scrollable Image Guide Body */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3.5 bg-slate-950/40 custom-scrollbar">
+        {/* Scrollable Image Guide Body with minimal smooth scrollbar */}
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3.5 bg-slate-950/40 custom-scrollbar scroll-smooth overscroll-contain">
           {/* Infographic Banner Image */}
           <div className="rounded-2xl overflow-hidden border border-slate-800 shadow-xl bg-slate-950 flex items-center justify-center group relative">
             <img
               src="/food-safety-guide.png"
-              alt="Giấy An Toàn Thực Phẩm - Bắp Cải Tím"
-              className="w-full h-auto object-contain rounded-2xl transition-transform duration-300 group-hover:scale-[1.01]"
+              alt="Giấy An Toàn Thực Phẩm"
+              className="w-full h-auto object-contain rounded-2xl transition-transform duration-300 group-hover:scale-[1.008]"
               loading="eager"
             />
           </div>
