@@ -7,13 +7,18 @@ import {
   Sparkles,
   SwitchCamera,
   X,
-  AlertCircle
+  AlertCircle,
+  Utensils,
+  Beef,
+  Bot
 } from 'lucide-react';
 import ScannerOverlay from './ScannerOverlay';
 
 export default function CameraCapture({
   imagePreview,
   selectedFile,
+  meatCategory = 'auto',
+  onMeatCategoryChange,
   meatHint,
   isScanning,
   onImageSelected,
@@ -164,34 +169,136 @@ export default function CameraCapture({
         onChange={handleFileChange}
       />
 
-      {/* Meat Type Hint Selector */}
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          Phân loại thịt (Tùy chọn):
-        </label>
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
-          {[
-            { id: '', label: 'Tự động nhận diện' },
-            { id: 'beef', label: '🥩 Thịt Bò' },
-            { id: 'pork', label: '🥩 Thịt Lợn' },
-            { id: 'poultry', label: '🍗 Gia cầm' },
-          ].map((type) => (
-            <button
-              key={type.id}
-              type="button"
-              disabled={isScanning}
-              onClick={() => onMeatHintChange(type.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                meatHint === type.id
-                  ? 'bg-emerald-500 text-slate-950 font-semibold shadow-md shadow-emerald-500/20'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
+      {/* Meat Category Mode: Segmented Control */}
+      <div className="mb-4 space-y-2.5 border-b border-slate-800/80 pb-3.5">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            Chế độ quét chất lượng:
+          </label>
+          <span className="text-[11px] font-mono text-slate-400">
+            {meatCategory === 'cooked' ? '🍲 Đồ đã chế biến' : meatCategory === 'raw' ? '🥩 Thịt tươi sống' : '🤖 AI Auto-Detect'}
+          </span>
         </div>
+
+        {/* 3-Way Segmented Control */}
+        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-950/80 border border-slate-800">
+          <button
+            type="button"
+            disabled={isScanning}
+            onClick={() => {
+              onMeatCategoryChange?.('auto');
+              onMeatHintChange?.('');
+            }}
+            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              meatCategory === 'auto'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>Tự Động</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isScanning}
+            onClick={() => {
+              onMeatCategoryChange?.('raw');
+              if (meatHint && !['beef', 'pork', 'poultry'].includes(meatHint)) {
+                onMeatHintChange?.('');
+              }
+            }}
+            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              meatCategory === 'raw'
+                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Beef className="w-3.5 h-3.5" />
+            <span>Thịt Sống</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isScanning}
+            onClick={() => {
+              onMeatCategoryChange?.('cooked');
+              if (meatHint && !['boiled_pork', 'braised_pork', 'fried_grilled', 'processed_sausage'].includes(meatHint)) {
+                onMeatHintChange?.('');
+              }
+            }}
+            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              meatCategory === 'cooked'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Utensils className="w-3.5 h-3.5" />
+            <span>Thịt Đã Nấu Chín</span>
+          </button>
+        </div>
+
+        {/* Dynamic Sub-Category Filters */}
+        {meatCategory === 'raw' && (
+          <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 animate-fadeIn">
+            <span className="text-[11px] text-slate-400 flex-shrink-0">Loại thịt:</span>
+            {[
+              { id: '', label: 'Tất cả thịt sống' },
+              { id: 'beef', label: '🥩 Thịt Bò' },
+              { id: 'pork', label: '🥩 Thịt Lợn' },
+              { id: 'poultry', label: '🍗 Gia cầm' },
+            ].map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                disabled={isScanning}
+                onClick={() => onMeatHintChange(type.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  meatHint === type.id
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {meatCategory === 'cooked' && (
+          <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 animate-fadeIn">
+            <span className="text-[11px] text-slate-400 flex-shrink-0">Món ăn:</span>
+            {[
+              { id: '', label: 'Tất cả đồ chín' },
+              { id: 'boiled_pork', label: '🍲 Thịt Luộc' },
+              { id: 'braised_pork', label: '🥘 Thịt Kho / Rim' },
+              { id: 'fried_grilled', label: '🍖 Chiên / Nướng' },
+              { id: 'processed_sausage', label: '🌭 Giò / Xúc Xích' },
+            ].map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                disabled={isScanning}
+                onClick={() => onMeatHintChange(type.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  meatHint === type.id
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {meatCategory === 'auto' && (
+          <p className="text-[11px] text-slate-400 pt-0.5 italic flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+            AI sẽ tự động nhận diện ảnh là thịt sống hay đồ đã nấu chín trước khi áp dụng thuật toán kiểm định.
+          </p>
+        )}
       </div>
 
       {/* Camera Error Message */}

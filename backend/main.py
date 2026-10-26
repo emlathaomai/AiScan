@@ -51,14 +51,17 @@ def health_check():
         "status": "healthy",
         "timestamp": time.time(),
         "model_mode": analyzer.model_mode,
+        "supported_categories": ["auto", "raw", "cooked"],
         "supported_meats": ["beef", "pork", "poultry", "auto_detect"],
-        "version": "1.0.0"
+        "supported_cooked_meats": ["boiled_pork", "braised_pork", "fried_grilled", "processed_sausage"],
+        "version": "1.1.0"
     }
 
 
 @app.post("/api/analyze")
 async def analyze_meat(
     file: UploadFile = File(...),
+    meat_category: str = Form("auto"),
     meat_hint: Optional[str] = Form(None)
 ):
     """
@@ -107,7 +110,7 @@ async def analyze_meat(
             )
 
         # 3. Analyze image
-        analysis_result = analyzer.analyze(image, meat_hint=meat_hint)
+        analysis_result = analyzer.analyze(image, meat_hint=meat_hint, meat_category=meat_category)
         analysis_result["filename"] = file.filename
         analysis_result["image_size"] = {"width": image.width, "height": image.height}
 

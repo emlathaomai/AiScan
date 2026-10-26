@@ -25,6 +25,10 @@ export default function ResultCard({ result }) {
     probabilities = { fresh: 0, aging: 0, frozen_damaged: 0, spoiled: 0 },
     detected_meat,
     meat_name_vn,
+    detected_type,
+    risk_level,
+    indicators_found = [],
+    recommendation,
     color_metrics,
     cv_inspection,
     safety_advice,
@@ -119,9 +123,16 @@ export default function ResultCard({ result }) {
               <StatusIcon className={`w-7 h-7 ${statusTheme.badgeText}`} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-950/70 border border-slate-800 text-slate-300">
                   {statusTheme.tag}
+                </span>
+                <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                  detected_type === 'cooked'
+                    ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
+                    : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                }`}>
+                  {detected_type === 'cooked' ? '🍲 Thịt Đã Nấu Chín' : '🥩 Thịt Tươi Sống'}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">
                   {meat_name_vn || 'Thịt tươi sống'}
@@ -151,6 +162,45 @@ export default function ResultCard({ result }) {
           {status_description}
         </p>
       </div>
+
+      {/* Actionable Recommendation Callout */}
+      {recommendation && (
+        <div className={`p-4 rounded-2xl border text-xs sm:text-sm leading-relaxed flex items-start gap-3 shadow-lg ${
+          risk_level === 'danger'
+            ? 'bg-rose-500/15 border-rose-500/40 text-rose-200'
+            : risk_level === 'medium'
+            ? 'bg-amber-500/15 border-amber-500/40 text-amber-200'
+            : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+        }`}>
+          <ShieldAlert className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+            risk_level === 'danger' ? 'text-rose-400' : risk_level === 'medium' ? 'text-amber-400' : 'text-emerald-400'
+          }`} />
+          <div>
+            <strong className="block font-bold mb-0.5">Khuyến nghị từ MeatGuard:</strong>
+            <span>{recommendation}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Visual Indicators Found */}
+      {indicators_found && indicators_found.length > 0 && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2.5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            Dấu hiệu quang học nhận diện (Visual Indicators):
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {indicators_found.map((ind, i) => (
+              <div key={i} className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300">
+                <span className={`font-bold mt-0.5 ${
+                  risk_level === 'danger' ? 'text-rose-400' : risk_level === 'medium' ? 'text-amber-400' : 'text-emerald-400'
+                }`}>•</span>
+                <span>{ind}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Confidence Breakdown Bars */}
       <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3.5">
@@ -259,55 +309,111 @@ export default function ResultCard({ result }) {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            {/* Ice / White Frost Mask */}
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-              <div className="flex justify-between text-xs font-medium">
-                <span className="text-slate-300 flex items-center gap-1.5">
-                  <Snowflake className="w-3.5 h-3.5 text-sky-400" />
-                  Tỷ lệ mảng trắng / Đá tuyết:
-                </span>
-                <span className={`font-mono font-bold ${cv_inspection.white_threshold_exceeded ? 'text-sky-400' : 'text-slate-300'}`}>
-                  {cv_inspection.white_ratio_pct}%
-                </span>
-              </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${cv_inspection.white_threshold_exceeded ? 'bg-sky-400' : 'bg-slate-500'}`}
-                  style={{ width: `${Math.min(cv_inspection.white_ratio_pct, 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>Ngưỡng cảnh báo: &gt;15%</span>
-                <span className={cv_inspection.white_threshold_exceeded ? 'text-sky-400 font-semibold' : 'text-emerald-400'}>
-                  {cv_inspection.white_threshold_exceeded ? '⚠️ Vượt ngưỡng cháy đông' : '✓ An toàn'}
-                </span>
-              </div>
-            </div>
+            {detected_type === 'cooked' ? (
+              <>
+                {/* Cooked: Mold Colonies */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-slate-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+                      Đốm nấm mốc xanh/trắng:
+                    </span>
+                    <span className={`font-mono font-bold ${cv_inspection.mold_threshold_exceeded ? 'text-rose-400' : 'text-slate-300'}`}>
+                      {cv_inspection.mold_ratio_pct || 0}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${cv_inspection.mold_threshold_exceeded ? 'bg-rose-500' : 'bg-slate-500'}`}
+                      style={{ width: `${Math.min((cv_inspection.mold_ratio_pct || 0) * 5, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>Ngưỡng cảnh báo: &gt;2%</span>
+                    <span className={cv_inspection.mold_threshold_exceeded ? 'text-rose-400 font-semibold' : 'text-emerald-400'}>
+                      {cv_inspection.mold_threshold_exceeded ? '⚠️ Phát hiện nấm mốc' : '✓ Sạch mốc'}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Dark / Necrotic Mask */}
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-              <div className="flex justify-between text-xs font-medium">
-                <span className="text-slate-300 flex items-center gap-1.5">
-                  <Flame className="w-3.5 h-3.5 text-rose-400" />
-                  Tỷ lệ thâm sẫm / Biến chất:
-                </span>
-                <span className={`font-mono font-bold ${cv_inspection.dark_threshold_exceeded ? 'text-rose-400' : 'text-slate-300'}`}>
-                  {cv_inspection.dark_ratio_pct}%
-                </span>
-              </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${cv_inspection.dark_threshold_exceeded ? 'bg-rose-500' : 'bg-slate-500'}`}
-                  style={{ width: `${Math.min(cv_inspection.dark_ratio_pct, 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>Ngưỡng cảnh báo: &gt;40%</span>
-                <span className={cv_inspection.dark_threshold_exceeded ? 'text-rose-400 font-semibold' : 'text-emerald-400'}>
-                  {cv_inspection.dark_threshold_exceeded ? '⚠️ Vượt ngưỡng biến chất' : '✓ An toàn'}
-                </span>
-              </div>
-            </div>
+                {/* Cooked: Congealed Fat / Mỡ đông tủ lạnh */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-slate-300 flex items-center gap-1.5">
+                      <Snowflake className="w-3.5 h-3.5 text-sky-400" />
+                      Lớp mỡ đông trắng đục:
+                    </span>
+                    <span className={`font-mono font-bold ${cv_inspection.congealed_fat_exceeded ? 'text-amber-400' : 'text-slate-300'}`}>
+                      {cv_inspection.white_ratio_pct || 0}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${cv_inspection.congealed_fat_exceeded ? 'bg-amber-500' : 'bg-slate-500'}`}
+                      style={{ width: `${Math.min(cv_inspection.white_ratio_pct || 0, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>Ngưỡng trữ lạnh: &gt;18%</span>
+                    <span className={cv_inspection.congealed_fat_exceeded ? 'text-amber-400 font-semibold' : 'text-emerald-400'}>
+                      {cv_inspection.congealed_fat_exceeded ? '⚠️ Để tủ lạnh lâu' : '✓ Bình thường'}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Raw: Ice / White Frost Mask */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-slate-300 flex items-center gap-1.5">
+                      <Snowflake className="w-3.5 h-3.5 text-sky-400" />
+                      Tỷ lệ mảng trắng / Đá tuyết:
+                    </span>
+                    <span className={`font-mono font-bold ${cv_inspection.white_threshold_exceeded ? 'text-sky-400' : 'text-slate-300'}`}>
+                      {cv_inspection.white_ratio_pct}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${cv_inspection.white_threshold_exceeded ? 'bg-sky-400' : 'bg-slate-500'}`}
+                      style={{ width: `${Math.min(cv_inspection.white_ratio_pct, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>Ngưỡng cảnh báo: &gt;15%</span>
+                    <span className={cv_inspection.white_threshold_exceeded ? 'text-sky-400 font-semibold' : 'text-emerald-400'}>
+                      {cv_inspection.white_threshold_exceeded ? '⚠️ Vượt ngưỡng cháy đông' : '✓ An toàn'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Raw: Dark / Necrotic Mask */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-slate-300 flex items-center gap-1.5">
+                      <Flame className="w-3.5 h-3.5 text-rose-400" />
+                      Tỷ lệ thâm sẫm / Biến chất:
+                    </span>
+                    <span className={`font-mono font-bold ${cv_inspection.dark_threshold_exceeded ? 'text-rose-400' : 'text-slate-300'}`}>
+                      {cv_inspection.dark_ratio_pct}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${cv_inspection.dark_threshold_exceeded ? 'bg-rose-500' : 'bg-slate-500'}`}
+                      style={{ width: `${Math.min(cv_inspection.dark_ratio_pct, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>Ngưỡng cảnh báo: &gt;40%</span>
+                    <span className={cv_inspection.dark_threshold_exceeded ? 'text-rose-400 font-semibold' : 'text-emerald-400'}>
+                      {cv_inspection.dark_threshold_exceeded ? '⚠️ Vượt ngưỡng biến chất' : '✓ An toàn'}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
