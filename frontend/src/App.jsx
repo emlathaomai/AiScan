@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import DisclaimerBanner from './components/DisclaimerBanner';
 import CameraCapture from './components/CameraCapture';
-import SampleSelector from './components/SampleSelector';
 import ResultCard from './components/ResultCard';
 import SensoryChecklist from './components/SensoryChecklist';
 import ScanHistory from './components/ScanHistory';
@@ -118,15 +117,6 @@ export default function App() {
   const handleImageSelected = (file, previewUrl) => {
     setSelectedFile(file);
     setImagePreview(previewUrl);
-    setAnalysisResult(null);
-    setErrorMessage(null);
-  };
-
-  // 7. Handle preset sample selected
-  const handleSelectSample = ({ file, previewUrl, meatHint: hint }) => {
-    setSelectedFile(file);
-    setImagePreview(previewUrl);
-    setMeatHint(hint || '');
     setAnalysisResult(null);
     setErrorMessage(null);
   };
@@ -380,12 +370,6 @@ export default function App() {
           onMeatHintChange={setMeatHint}
           onResetImage={handleResetImage}
           onStartAnalyze={handleStartAnalyze}
-        />
-
-        {/* Quick Sample Selector for Demo Testing */}
-        <SampleSelector
-          onSelectSample={handleSelectSample}
-          disabled={isScanning}
         />
 
         {/* Analysis Results Display */}
