@@ -3,6 +3,7 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
+  Snowflake,
   ShieldAlert,
   Flame,
   Refrigerator,
@@ -21,7 +22,7 @@ export default function ResultCard({ result }) {
     status_title,
     status_description,
     confidence,
-    probabilities = { fresh: 0, aging: 0, spoiled: 0 },
+    probabilities = { fresh: 0, aging: 0, frozen_damaged: 0, spoiled: 0 },
     detected_meat,
     meat_name_vn,
     color_metrics,
@@ -68,6 +69,16 @@ export default function ResultCard({ result }) {
       Icon: AlertTriangle,
       tag: '🟡 CẦN NẤU NGAY'
     },
+    frozen_damaged: {
+      badgeBg: 'bg-sky-500/15',
+      badgeBorder: 'border-sky-500/30',
+      badgeText: 'text-sky-400',
+      accentColor: '#0ea5e9',
+      barColor: 'bg-sky-500',
+      glowRing: 'ring-sky-500/20',
+      Icon: Snowflake,
+      tag: '❄️ CHÁY ĐÔNG / ĐÓNG ĐÁ'
+    },
     spoiled: {
       badgeBg: 'bg-rose-500/15',
       badgeBorder: 'border-rose-500/30',
@@ -94,6 +105,7 @@ export default function ResultCard({ result }) {
   // Format percentages
   const pFresh = Math.round((probabilities.fresh || 0) * 100);
   const pAging = Math.round((probabilities.aging || 0) * 100);
+  const pFrozen = Math.round((probabilities.frozen_damaged || 0) * 100);
   const pSpoiled = Math.round((probabilities.spoiled || 0) * 100);
 
   return (
@@ -182,6 +194,23 @@ export default function ResultCard({ result }) {
               <div
                 className="h-full bg-amber-500 rounded-full transition-all duration-700 ease-out"
                 style={{ width: `${pAging}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Frozen Damaged Bar */}
+          <div>
+            <div className="flex justify-between text-xs font-semibold mb-1">
+              <span className="text-sky-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                ❄️ Cháy đông / Đá tuyết (Frozen Damaged)
+              </span>
+              <span className="text-slate-200 font-mono">{pFrozen}%</span>
+            </div>
+            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-sky-500 rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${pFrozen}%` }}
               />
             </div>
           </div>

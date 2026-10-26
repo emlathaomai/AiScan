@@ -147,27 +147,33 @@ export default function App() {
         const name = (file?.name || '').toLowerCase();
         let status = 'fresh';
         let confidence = 94.5;
-        let probs = { fresh: 0.945, aging: 0.042, spoiled: 0.013 };
+        let probs = { fresh: 0.945, aging: 0.035, frozen_damaged: 0.012, spoiled: 0.008 };
 
-        if (name.includes('aging') || name.includes('cu')) {
+        if (name.includes('frozen') || name.includes('chay') || name.includes('da') || name.includes('tuyet')) {
+          status = 'frozen_damaged';
+          confidence = 88.5;
+          probs = { fresh: 0.045, aging: 0.055, frozen_damaged: 0.885, spoiled: 0.015 };
+        } else if (name.includes('aging') || name.includes('cu')) {
           status = 'aging';
           confidence = 76.8;
-          probs = { fresh: 0.12, aging: 0.768, spoiled: 0.112 };
+          probs = { fresh: 0.12, aging: 0.768, frozen_damaged: 0.042, spoiled: 0.070 };
         } else if (name.includes('spoiled') || name.includes('uon') || name.includes('hong')) {
           status = 'spoiled';
           confidence = 91.4;
-          probs = { fresh: 0.018, aging: 0.068, spoiled: 0.914 };
+          probs = { fresh: 0.018, aging: 0.048, frozen_damaged: 0.020, spoiled: 0.914 };
         }
 
         const titles = {
           fresh: 'Tươi (Fresh)',
           aging: 'Bắt đầu suy giảm (Half-Fresh / Aging)',
+          frozen_damaged: 'Cháy đông / Đá tuyết (Frozen Damaged)',
           spoiled: 'Ươn / Hỏng (Spoiled)'
         };
 
         const descs = {
           fresh: 'Thịt tươi ngon, mô cơ săn chắc, màu sắc tự nhiên, an toàn để chế biến tiêu thụ.',
           aging: 'Thịt đã bắt đầu oxy hóa metmyoglobin, giảm độ tươi. Cần chế biến ngay trong ngày và xử lý nhiệt kỹ.',
+          frozen_damaged: 'Thịt có dấu hiệu cháy đông (Freezer Burn) hoặc đóng đá tuyết dày do để ngăn đông lâu hoặc bao gói hở khí. Hơi nước thăng hoa để lại các mảng tinh thể đá tuyết và mô xơ khô cứng.',
           spoiled: 'Thịt đã biến chất, có dấu hiệu ươn hỏng hoặc nhiễm khuẩn bề mặt. Tuyệt đối KHÔNG nên ăn để tránh ngộ độc thực phẩm.'
         };
 
@@ -193,20 +199,30 @@ export default function App() {
             saturation_pct: 72.4,
             brightness_pct: 69.9,
             red_green_ratio: 3.42,
-            freshness_index: status === 'fresh' ? 92.5 : status === 'aging' ? 52.0 : 15.0
+            freshness_index: status === 'fresh' ? 92.5 : status === 'aging' ? 55.0 : status === 'frozen_damaged' ? 45.0 : 12.0
           },
           safety_advice: {
             storage: status === 'fresh'
               ? 'Bảo quản ngăn mát tủ lạnh (0°C - 4°C) dùng trong 1-2 ngày, hoặc cấp đông (-18°C).'
               : status === 'aging'
               ? 'Nên nấu chín ngay trong hôm nay, không tiếp tục lưu trữ ngăn mát.'
+              : status === 'frozen_damaged'
+              ? 'Nên rã đông chậm trong ngăn mát, gọt bỏ mảng xơ trắng/khô trước khi nấu.'
               : 'Vứt bỏ vào thùng rác kín, khử khuẩn dao thớt dụng cụ.',
             cooking: status === 'fresh'
               ? 'Thích hợp chế biến mọi món ăn (xào, nướng, lẩu, bít tết).'
               : status === 'aging'
               ? 'Nên dùng cho các món kho kỹ hoặc hầm nhừ, nhiệt độ tâm tối thiểu 75°C.'
+              : status === 'frozen_damaged'
+              ? 'Không nên làm bít tết/xào (thịt sẽ bị khô bã). Nên thái mỏng, ướp đậm vị hoặc hầm/xay nhuyễn.'
               : 'Không thể loại bỏ hoàn toàn độc tố vi khuẩn qua đun nấu thông thường.',
-            risk_level: status === 'fresh' ? 'Thấp (An toàn)' : status === 'aging' ? 'Trung bình (Cần lưu ý)' : 'Nguy hiểm (Tuyệt đối không ăn)'
+            risk_level: status === 'fresh'
+              ? 'Thấp (An toàn)'
+              : status === 'aging'
+              ? 'Trung bình (Cần lưu ý)'
+              : status === 'frozen_damaged'
+              ? 'Trung bình (Mất phẩm chất và vị ngọt)'
+              : 'Nguy hiểm (Tuyệt đối không ăn)'
           },
           model_mode: 'client_fallback_mode',
           inference_time_ms: 680

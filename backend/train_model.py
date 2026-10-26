@@ -1,6 +1,7 @@
 """
-MeatGuard - High-Speed Deep Learning Training & ONNX Export
-Uses vectorized PyTorch operations for instant training and ONNX export.
+MeatGuard - Deep Learning Model Training & ONNX Export Script
+Incorporates Data Augmentation (torchvision transforms, ColorJitter)
+and detects: Fresh, Aging, Frozen_Damaged (Cháy đông / Đá tuyết), Spoiled.
 """
 
 import os
@@ -11,11 +12,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
+import torchvision.transforms as transforms
 
 
-# 1. Custom CNN Architecture for Meat Freshness Classification
+# 1. Custom CNN Architecture for 4-Class Meat Evaluation
 class MeatFreshnessNet(nn.Module):
-    def __init__(self, num_classes=3):
+    def __init__(self, num_classes=4):
         super(MeatFreshnessNet, self).__init__()
         self.features = nn.Sequential(
             # Block 1: 224x224 -> 56x56
@@ -56,53 +58,85 @@ class MeatFreshnessNet(nn.Module):
         return x
 
 
-# 2. Vectorized Meat Data Generation (Instant in <0.2s)
-def create_dataset(n_per_class=300):
-    print(f"[Dataset] Generating {n_per_class * 3} vectorized samples...", flush=True)
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+# 2. Data Augmentation Pipeline as requested
+# ColorJitter specifically tuned to catch frost/ice crystal reflections and dark freeze burn
+augmentation_pipeline = transforms.Compose([
+    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
+    transforms.RandomHorizontalFlip(p=0.5),
+])
+
+mean_tensor = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+std_tensor = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+
+
+# 3. Vectorized Dataset Generator for 4 Classes
+# 0: Fresh, 1: Aging, 2: Frozen_Damaged, 3: Spoiled
+def create_dataset(n_per_class=240, apply_aug=True):
+    print(f"[Dataset] Generating {n_per_class * 4} augmented samples (Fresh, Aging, Frozen_Damaged, Spoiled)...", flush=True)
 
     n3 = n_per_class // 3
-    fresh = torch.zeros(n_per_class, 3, 224, 224)
 
-    # Beef (Deep Red)
+    # --- Class 0: Fresh (Beef, Pork, Poultry) ---
+    fresh = torch.zeros(n_per_class, 3, 224, 224)
     fresh[:n3, 0] = torch.empty(n3, 1, 1).uniform_(0.70, 0.95)
     fresh[:n3, 1] = torch.empty(n3, 1, 1).uniform_(0.15, 0.35)
     fresh[:n3, 2] = torch.empty(n3, 1, 1).uniform_(0.15, 0.35)
 
-    # Pork (Rose Pink)
     fresh[n3:2*n3, 0] = torch.empty(n3, 1, 1).uniform_(0.80, 0.96)
     fresh[n3:2*n3, 1] = torch.empty(n3, 1, 1).uniform_(0.45, 0.65)
     fresh[n3:2*n3, 2] = torch.empty(n3, 1, 1).uniform_(0.45, 0.65)
 
-    # Poultry (Pale Peach)
+    # Poultry (Peach-Pink: R > G > B)
     rem = n_per_class - 2 * n3
     fresh[2*n3:, 0] = torch.empty(rem, 1, 1).uniform_(0.85, 0.98)
-    fresh[2*n3:, 1] = torch.empty(rem, 1, 1).uniform_(0.70, 0.88)
-    fresh[2*n3:, 2] = torch.empty(rem, 1, 1).uniform_(0.60, 0.78)
+    fresh[2*n3:, 1] = torch.empty(rem, 1, 1).uniform_(0.62, 0.76)
+    fresh[2*n3:, 2] = torch.empty(rem, 1, 1).uniform_(0.48, 0.62)
 
-    # Class 1: Aging (Metmyoglobin Brown)
+    # --- Class 1: Aging (Metmyoglobin Brown Oxidation) ---
     aging = torch.zeros(n_per_class, 3, 224, 224)
     aging[:, 0] = torch.empty(n_per_class, 1, 1).uniform_(0.42, 0.62)
     aging[:, 1] = torch.empty(n_per_class, 1, 1).uniform_(0.30, 0.46)
     aging[:, 2] = torch.empty(n_per_class, 1, 1).uniform_(0.18, 0.35)
 
-    # Class 2: Spoiled (Greenish / Slate Gray)
+    # --- Class 2: Frozen_Damaged (Cháy đông / Đá tuyết / Freezer Burn) ---
+    # Characterized by cold white/cyan ice glaze or white frost crystals on freeze-burned dry meat
+    frozen = torch.zeros(n_per_class, 3, 224, 224)
+    half = n_per_class // 2
+    # Type A: Thick frost / ice crystals (cold white/bluish glaze: R ≈ G ≈ B > 0.80)
+    frozen[:half, 0] = torch.empty(half, 1, 1).uniform_(0.80, 0.96)
+    frozen[:half, 1] = torch.empty(half, 1, 1).uniform_(0.82, 0.97)
+    frozen[:half, 2] = torch.empty(half, 1, 1).uniform_(0.85, 0.98)
+    # Type B: Freeze-burned dark dry patches covered with frost specks
+    frozen[half:, 0] = torch.empty(n_per_class - half, 1, 1).uniform_(0.38, 0.55)
+    frozen[half:, 1] = torch.empty(n_per_class - half, 1, 1).uniform_(0.28, 0.42)
+    frozen[half:, 2] = torch.empty(n_per_class - half, 1, 1).uniform_(0.25, 0.40)
+    specks = (torch.rand(n_per_class - half, 1, 224, 224) > 0.60).float()
+    frozen[half:] = frozen[half:] * (1 - specks) + torch.empty(n_per_class - half, 3, 224, 224).uniform_(0.85, 0.98) * specks
+
+    # --- Class 3: Spoiled (Greenish / Slate Gray Decomposition) ---
     spoiled = torch.zeros(n_per_class, 3, 224, 224)
     spoiled[:, 0] = torch.empty(n_per_class, 1, 1).uniform_(0.22, 0.38)
     spoiled[:, 1] = torch.empty(n_per_class, 1, 1).uniform_(0.40, 0.58)
     spoiled[:, 2] = torch.empty(n_per_class, 1, 1).uniform_(0.28, 0.45)
 
-    # Combine & add noise
-    X = torch.cat([fresh, aging, spoiled], dim=0)
-    noise = torch.randn_like(X) * 0.03
+    # Combine all classes
+    X = torch.cat([fresh, aging, frozen, spoiled], dim=0)
+
+    # Apply Data Augmentation (ColorJitter & Flip)
+    if apply_aug:
+        # Batch color jitter & flip
+        X = augmentation_pipeline(X)
+
+    noise = torch.randn_like(X) * 0.02
     X = torch.clamp(X + noise, 0.0, 1.0)
-    X = (X - mean) / std
+    # Normalize with ImageNet standard
+    X = (X - mean_tensor) / std_tensor
 
     y = torch.cat([
-        torch.zeros(n_per_class, dtype=torch.long),
-        torch.ones(n_per_class, dtype=torch.long),
-        torch.full((n_per_class,), 2, dtype=torch.long)
+        torch.zeros(n_per_class, dtype=torch.long),           # 0: fresh
+        torch.ones(n_per_class, dtype=torch.long),            # 1: aging
+        torch.full((n_per_class,), 2, dtype=torch.long),      # 2: frozen_damaged
+        torch.full((n_per_class,), 3, dtype=torch.long)       # 3: spoiled
     ])
 
     return X, y
@@ -110,23 +144,24 @@ def create_dataset(n_per_class=300):
 
 def main():
     print("=" * 60, flush=True)
-    print("MeatGuard AI - Fast Model Training & ONNX Export", flush=True)
+    print("MeatGuard AI - Model Training with Freezer Burn & Frost Detection", flush=True)
+    print("Classes: [0: Fresh, 1: Aging, 2: Frozen_Damaged, 3: Spoiled]", flush=True)
     print("=" * 60, flush=True)
 
-    X_train, y_train = create_dataset(n_per_class=240)
-    X_val, y_val = create_dataset(n_per_class=60)
+    X_train, y_train = create_dataset(n_per_class=250, apply_aug=True)
+    X_val, y_val = create_dataset(n_per_class=60, apply_aug=False)
 
     train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=32, shuffle=True)
     val_loader = DataLoader(TensorDataset(X_val, y_val), batch_size=32, shuffle=False)
 
-    model = MeatFreshnessNet(num_classes=3)
+    model = MeatFreshnessNet(num_classes=4)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    print("\nTraining CNN for 5 epochs...", flush=True)
+    print("\nTraining CNN for 6 epochs with Data Augmentation...", flush=True)
     start_time = time.time()
 
-    for epoch in range(1, 6):
+    for epoch in range(1, 7):
         model.train()
         running_loss = 0.0
         correct = 0
@@ -159,7 +194,7 @@ def main():
                 val_correct += v_pred.eq(v_tg).sum().item()
 
         val_acc = 100.0 * val_correct / val_total
-        print(f"Epoch [{epoch}/5] Loss: {train_loss:.4f} | Train Acc: {train_acc:.1f}% | Val Acc: {val_acc:.1f}%", flush=True)
+        print(f"Epoch [{epoch}/6] Loss: {train_loss:.4f} | Train Acc: {train_acc:.1f}% | Val Acc: {val_acc:.1f}%", flush=True)
 
     print(f"Training completed in {time.time() - start_time:.2f}s!", flush=True)
 
@@ -181,8 +216,7 @@ def main():
         dummy_input,
         onnx_file,
         export_params=True,
-        opset_version=14,
-        do_constant_folding=True,
+        opset_version=18,
         input_names=["input"],
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}}
@@ -196,7 +230,7 @@ def main():
     sess = ort.InferenceSession(onnx_file)
     inp_name = sess.get_inputs()[0].name
     out = sess.run(None, {inp_name: dummy_input.numpy()})
-    print(f"ONNX Verification successful! Logits: {out[0][0]}", flush=True)
+    print(f"ONNX Verification successful! Logits: {out[0][0]} (4 Classes)", flush=True)
     print("=" * 60, flush=True)
 
 

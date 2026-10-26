@@ -28,6 +28,11 @@ export default function ScanHistory({ history, onSelectHistoryItem, onClearHisto
           label: 'Cần nấu ngay (Aging)',
           color: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
         };
+      case 'frozen_damaged':
+        return {
+          label: 'Cháy đông (Freeze)',
+          color: 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+        };
       case 'spoiled':
         return {
           label: 'Ươn / Hỏng (Spoiled)',

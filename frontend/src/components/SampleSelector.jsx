@@ -77,6 +77,28 @@ function createMeatSampleDataUrl(type) {
     ctx.beginPath();
     ctx.arc(230, 190, 40, 0, Math.PI * 2);
     ctx.fill();
+  } else if (type === 'frozen_meat') {
+    // Dark oxidized dry brown base with ice crust
+    const grad = ctx.createRadialGradient(200, 200, 20, 200, 200, 140);
+    grad.addColorStop(0, '#664a38');
+    grad.addColorStop(0.7, '#4d3322');
+    grad.addColorStop(1, '#331f13');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Thick ice crystals & white frost patches
+    ctx.fillStyle = 'rgba(235, 245, 255, 0.85)';
+    ctx.beginPath();
+    ctx.arc(170, 170, 45, 0, Math.PI * 2);
+    ctx.arc(230, 220, 50, 0, Math.PI * 2);
+    ctx.arc(150, 230, 35, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Frost spiky speckles
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    for (let i = 0; i < 25; i++) {
+      ctx.fillRect(130 + (i * 9) % 140, 140 + (i * 13) % 120, 4, 4);
+    }
   } else if (type === 'spoiled_meat') {
     // Greenish-gray decomposition
     const grad = ctx.createRadialGradient(200, 200, 20, 200, 200, 140);
@@ -145,6 +167,14 @@ export default function SampleSelector({ onSelectSample, disabled }) {
       fileName: 'sample_aging_beef.jpg'
     },
     {
+      id: 'frozen_meat',
+      name: '❄️ Cháy Đông',
+      badge: 'Đá tuyết (Burn)',
+      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+      meatHint: 'beef',
+      fileName: 'sample_frozen_damaged.jpg'
+    },
+    {
       id: 'spoiled_meat',
       name: '⚠️ Thịt Ươn',
       badge: 'Hỏng (Spoiled)',
@@ -175,7 +205,7 @@ export default function SampleSelector({ onSelectSample, disabled }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {samples.map((s) => (
           <button
             key={s.id}
