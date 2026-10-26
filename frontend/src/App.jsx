@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import DisclaimerBanner from './components/DisclaimerBanner';
 import CameraCapture from './components/CameraCapture';
-import CookedSampleBar from './components/CookedSampleBar';
 import ResultCard from './components/ResultCard';
 import SensoryChecklist from './components/SensoryChecklist';
 import ScanHistory from './components/ScanHistory';
@@ -119,16 +118,6 @@ export default function App() {
   const handleImageSelected = (file, previewUrl) => {
     setSelectedFile(file);
     setImagePreview(previewUrl);
-    setAnalysisResult(null);
-    setErrorMessage(null);
-  };
-
-  // 7. Handle sample quick-test selected
-  const handleSelectSample = ({ file, previewUrl, meatCategory: cat, meatHint: hint }) => {
-    setSelectedFile(file);
-    setImagePreview(previewUrl);
-    if (cat) setMeatCategory(cat);
-    setMeatHint(hint || '');
     setAnalysisResult(null);
     setErrorMessage(null);
   };
@@ -493,12 +482,6 @@ export default function App() {
           onMeatHintChange={setMeatHint}
           onResetImage={handleResetImage}
           onStartAnalyze={handleStartAnalyze}
-        />
-
-        {/* Cooked Meat Quick-Test Presets Bar */}
-        <CookedSampleBar
-          onSelectSample={handleSelectSample}
-          disabled={isScanning}
         />
 
         {/* Analysis Results Display */}
