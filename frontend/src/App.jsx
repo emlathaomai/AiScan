@@ -5,6 +5,7 @@ import CameraCapture from './components/CameraCapture';
 import ResultCard from './components/ResultCard';
 import SensoryChecklist from './components/SensoryChecklist';
 import ScanHistory from './components/ScanHistory';
+import GuideModal from './components/GuideModal';
 import { ShieldAlert, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined
@@ -22,6 +23,15 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+
+  // Guide modal banner state (default to true unless user ticked "Không tự động hiển thị lại")
+  const [showGuideModal, setShowGuideModal] = useState(() => {
+    try {
+      return localStorage.getItem('meatguard_hide_guide_modal_v1') !== 'true';
+    } catch (e) {
+      return true;
+    }
+  });
 
   // Server health state
   const [serverStatus, setServerStatus] = useState('checking'); // 'online' | 'offline' | 'checking'
@@ -421,6 +431,13 @@ export default function App() {
         serverStatus={serverStatus}
         onCheckServer={checkServerHealth}
         activeMode={activeMode}
+        onOpenGuide={() => setShowGuideModal(true)}
+      />
+
+      {/* Food Safety Indicator Paper Popup Modal / Banner */}
+      <GuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
       />
 
       {/* Main Content Area - Mobile-First Container */}

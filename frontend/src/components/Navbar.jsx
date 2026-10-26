@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Info, RefreshCw, Cpu, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { ShieldCheck, Info, RefreshCw, Cpu, CheckCircle2, AlertCircle, X, FileText } from 'lucide-react';
 
-export default function Navbar({ serverStatus, onCheckServer, activeMode }) {
+export default function Navbar({ serverStatus, onCheckServer, activeMode, onOpenGuide }) {
   const [showInfoModal, setShowInfoModal] = useState(false);
 
   return (
@@ -60,6 +60,18 @@ export default function Navbar({ serverStatus, onCheckServer, activeMode }) {
             </span>
             <RefreshCw className={`w-3 h-3 ${serverStatus === 'checking' ? 'animate-spin' : ''}`} />
           </button>
+
+          {/* Food Safety Indicator Paper Guide Button */}
+          {onOpenGuide && (
+            <button
+              onClick={onOpenGuide}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold transition-all active:scale-95 shadow-sm"
+              title="Xem hướng dẫn Giấy chỉ thị an toàn thực phẩm (Bắp cải tím)"
+            >
+              <FileText className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden sm:inline">Giấy chỉ thị pH</span>
+            </button>
+          )}
 
           {/* About / Info Modal Button */}
           <button
