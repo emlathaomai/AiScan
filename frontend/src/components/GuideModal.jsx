@@ -28,23 +28,23 @@ export default function GuideModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-md animate-fadeIn transition-opacity duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn transition-opacity duration-200">
       {/* Click outside backdrop to close */}
       <div className="absolute inset-0" onClick={handleClose} />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] z-10 animate-modalIn transition-all duration-300 will-change-transform">
+      <div className="relative w-full max-w-lg bg-[#121824] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] z-10 animate-modalIn transition-all duration-300 will-change-transform">
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 bg-white flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-800/80 bg-[#0B0F17]/90 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-2xs">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900">
+              <h3 className="text-sm sm:text-base font-bold text-slate-100">
                 Giấy Chỉ Thị An Toàn Thực Phẩm
               </h3>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-400">
                 Hướng dẫn sử dụng & đối chiếu kết quả pH tự nhiên
               </p>
             </div>
@@ -52,7 +52,7 @@ export default function GuideModal({ isOpen, onClose }) {
 
           <button
             onClick={handleClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all duration-200 active:scale-90"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800 transition-all duration-200 active:scale-90"
             title="Đóng popup"
           >
             <X className="w-5 h-5" />
@@ -60,9 +60,9 @@ export default function GuideModal({ isOpen, onClose }) {
         </div>
 
         {/* Scrollable Image Guide Body with minimal smooth scrollbar */}
-        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3.5 bg-slate-50/60 custom-scrollbar scroll-smooth overscroll-contain">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3.5 bg-[#0B0F17]/60 custom-scrollbar scroll-smooth overscroll-contain">
           {/* Infographic Banner Image */}
-          <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white flex items-center justify-center group relative">
+          <div className="rounded-2xl overflow-hidden border border-slate-800 shadow-md bg-[#121824] flex items-center justify-center group relative">
             <img
               src="/food-safety-guide.png"
               alt="Giấy An Toàn Thực Phẩm"
@@ -73,18 +73,18 @@ export default function GuideModal({ isOpen, onClose }) {
 
           {/* Quick Summary Highlights */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 flex items-start gap-2 text-purple-900">
-              <span className="w-3 h-3 rounded-full bg-purple-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 flex items-start gap-2 text-purple-200">
+              <span className="w-3 h-3 rounded-full bg-purple-500 flex-shrink-0 mt-0.5" />
               <div>
-                <strong className="block text-purple-800">Giữ nguyên màu tím:</strong>
+                <strong className="block text-purple-300">Giữ nguyên màu tím:</strong>
                 <span>pH ổn định, thịt/cá có dấu hiệu tươi mới an toàn.</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2 text-emerald-900">
+            <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 flex items-start gap-2 text-emerald-200">
               <span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <strong className="block text-emerald-800">Chuyển sang màu xanh:</strong>
+                <strong className="block text-emerald-400">Chuyển sang màu xanh:</strong>
                 <span>pH biến đổi tăng tính kiềm, có nguy cơ thịt bị ươn/hỏng.</span>
               </div>
             </div>
@@ -92,13 +92,13 @@ export default function GuideModal({ isOpen, onClose }) {
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
-          <label className="flex items-center space-x-2 text-xs text-slate-500 cursor-pointer select-none">
+        <div className="p-4 sm:p-5 border-t border-slate-800/80 bg-[#0B0F17]/90 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <label className="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={dontShowAgain}
               onChange={(e) => setDontShowAgain(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500/20"
+              className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500/20"
             />
             <span>Không tự động hiển thị lại</span>
           </label>
@@ -106,7 +106,7 @@ export default function GuideModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={handleClose}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20 transition-transform active:scale-95"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md shadow-emerald-950/40 transition-transform active:scale-95"
           >
             <span>Đã Hiểu & Bắt Đầu Sử Dụng</span>
             <ArrowRight className="w-4 h-4 text-white" />

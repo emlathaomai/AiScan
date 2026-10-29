@@ -150,7 +150,7 @@ export default function CameraCapture({
   };
 
   return (
-    <div className="w-full bg-white/95 border border-emerald-100/90 rounded-3xl p-4 sm:p-6 shadow-xl shadow-emerald-950/5 relative overflow-hidden text-left">
+    <div className="w-full bg-[#121824]/90 border border-slate-800/80 rounded-3xl p-4 sm:p-6 shadow-2xl backdrop-blur-sm relative overflow-hidden text-left">
       {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
@@ -170,19 +170,19 @@ export default function CameraCapture({
       />
 
       {/* Meat Category Mode: Segmented Control */}
-      <div className="mb-4 space-y-2.5 border-b border-slate-100 pb-3.5">
+      <div className="mb-4 space-y-2.5 border-b border-slate-800/80 pb-3.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
             Chế độ quét chất lượng:
           </label>
-          <span className="text-[11px] font-mono text-slate-500 font-medium">
+          <span className="text-[11px] font-mono text-slate-400">
             {meatCategory === 'cooked' ? '🍲 Đồ đã chế biến' : meatCategory === 'raw' ? '🥩 Thịt tươi sống' : '🤖 AI Auto-Detect'}
           </span>
         </div>
 
         {/* 3-Way Segmented Control */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100/90 border border-slate-200/80">
+        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#0B0F17]/90 border border-slate-800/80">
           <button
             type="button"
             disabled={isScanning}
@@ -192,8 +192,8 @@ export default function CameraCapture({
             }}
             className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               meatCategory === 'auto'
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Bot className="w-3.5 h-3.5" />
@@ -211,8 +211,8 @@ export default function CameraCapture({
             }}
             className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               meatCategory === 'raw'
-                ? 'bg-rose-500 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Beef className="w-3.5 h-3.5" />
@@ -230,8 +230,8 @@ export default function CameraCapture({
             }}
             className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               meatCategory === 'cooked'
-                ? 'bg-amber-500 text-slate-950 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Utensils className="w-3.5 h-3.5" />
@@ -242,7 +242,7 @@ export default function CameraCapture({
         {/* Dynamic Sub-Category Filters */}
         {meatCategory === 'raw' && (
           <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 animate-fadeIn">
-            <span className="text-[11px] text-slate-500 flex-shrink-0 font-medium">Loại thịt:</span>
+            <span className="text-[11px] text-slate-400 flex-shrink-0">Loại thịt:</span>
             {[
               { id: '', label: 'Tất cả thịt sống' },
               { id: 'beef', label: '🥩 Thịt Bò' },
@@ -256,8 +256,8 @@ export default function CameraCapture({
                 onClick={() => onMeatHintChange(type.id)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   meatHint === type.id
-                    ? 'bg-rose-50 text-rose-700 border border-rose-300 font-semibold shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80 border border-slate-200/70'
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
                 {type.label}
@@ -268,7 +268,7 @@ export default function CameraCapture({
 
         {meatCategory === 'cooked' && (
           <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 animate-fadeIn">
-            <span className="text-[11px] text-slate-500 flex-shrink-0 font-medium">Món ăn:</span>
+            <span className="text-[11px] text-slate-400 flex-shrink-0">Món ăn:</span>
             {[
               { id: '', label: 'Tất cả đồ chín' },
               { id: 'boiled_pork', label: '🍲 Thịt Luộc' },
@@ -283,8 +283,8 @@ export default function CameraCapture({
                 onClick={() => onMeatHintChange(type.id)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   meatHint === type.id
-                    ? 'bg-amber-50 text-amber-700 border border-amber-300 font-semibold shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80 border border-slate-200/70'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
                 {type.label}
@@ -294,8 +294,8 @@ export default function CameraCapture({
         )}
 
         {meatCategory === 'auto' && (
-          <p className="text-[11px] text-slate-500 pt-0.5 italic flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+          <p className="text-[11px] text-slate-400 pt-0.5 italic flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-emerald-400 flex-shrink-0" />
             AI sẽ tự động nhận diện ảnh là thịt sống hay đồ đã nấu chín trước khi áp dụng thuật toán kiểm định.
           </p>
         )}
@@ -303,12 +303,12 @@ export default function CameraCapture({
 
       {/* Camera Error Message */}
       {cameraError && (
-        <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between">
+        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center justify-between">
           <span className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {cameraError}
           </span>
-          <button onClick={() => setCameraError(null)} className="p-1 hover:text-rose-900">
+          <button onClick={() => setCameraError(null)} className="p-1 hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -328,7 +328,7 @@ export default function CameraCapture({
           {/* Guide Overlay for live camera */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
             <div className="w-56 h-56 rounded-full border-2 border-dashed border-emerald-400/60 flex items-center justify-center">
-              <span className="text-[11px] text-white bg-slate-900/80 px-2 py-0.5 rounded-full backdrop-blur-xs">
+              <span className="text-[11px] text-emerald-300/80 bg-slate-950/70 px-2 py-0.5 rounded-full">
                 Đặt miếng thịt vào tâm
               </span>
             </div>
@@ -339,7 +339,7 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={switchCameraFacing}
-              className="p-3 rounded-full bg-slate-900/80 text-white border border-slate-700 hover:bg-slate-800 transition-transform active:scale-95 shadow-md"
+              className="p-3 rounded-full bg-slate-900/80 text-slate-200 border border-slate-700 hover:text-white hover:bg-slate-800 transition-transform active:scale-95 shadow-md"
               title="Đổi camera trước/sau"
             >
               <SwitchCamera className="w-5 h-5" />
@@ -357,7 +357,7 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={stopLiveCamera}
-              className="p-3 rounded-full bg-slate-900/80 text-white border border-slate-700 hover:bg-slate-800 transition-transform active:scale-95 shadow-md"
+              className="p-3 rounded-full bg-slate-900/80 text-slate-200 border border-slate-700 hover:text-white hover:bg-slate-800 transition-transform active:scale-95 shadow-md"
               title="Đóng camera"
             >
               <X className="w-5 h-5" />
@@ -366,7 +366,7 @@ export default function CameraCapture({
         </div>
       ) : imagePreview ? (
         /* Image Preview with Scanner Overlay */
-        <div className="relative w-full aspect-square max-h-[440px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shadow-xl flex items-center justify-center group">
+        <div className="relative w-full aspect-square max-h-[440px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-750 shadow-2xl flex items-center justify-center group">
           <img
             src={imagePreview}
             alt="Meat Preview"
@@ -382,10 +382,10 @@ export default function CameraCapture({
               <button
                 type="button"
                 onClick={onResetImage}
-                className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-800 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md shadow-md transition-transform active:scale-95"
+                className="px-3 py-1.5 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 text-xs font-medium flex items-center gap-1.5 backdrop-blur-md shadow-lg transition-transform active:scale-95"
                 title="Chọn lại ảnh"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+                <RotateCcw className="w-3.5 h-3.5" />
                 <span>Đổi ảnh</span>
               </button>
             </div>
@@ -394,7 +394,7 @@ export default function CameraCapture({
           {/* Filename & Resolution badge */}
           {selectedFile && !isScanning && (
             <div className="absolute bottom-3 left-3 z-20">
-              <span className="text-[11px] font-mono text-slate-700 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm font-medium">
+              <span className="text-[11px] font-mono text-slate-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800">
                 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
               </span>
             </div>
@@ -408,19 +408,19 @@ export default function CameraCapture({
           onDrop={handleDrop}
           className={`relative w-full aspect-square max-h-[380px] rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer ${
             isDragging
-              ? 'border-emerald-500 bg-emerald-50'
-              : 'border-slate-300 hover:border-emerald-500 bg-emerald-50/20 hover:bg-emerald-50/40'
+              ? 'border-emerald-500 bg-emerald-500/10'
+              : 'border-slate-700 hover:border-emerald-500/60 bg-[#0B0F17]/60 hover:bg-[#0B0F17]/90'
           }`}
           onClick={() => fileInputRef.current?.click()}
         >
-          <div className="w-16 h-16 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm mb-4">
-            <Upload className="w-8 h-8 text-emerald-600" />
+          <div className="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 transition-colors mb-4 shadow-inner">
+            <Upload className="w-8 h-8 text-emerald-400" />
           </div>
 
-          <p className="text-base font-bold text-slate-800 mb-1">
+          <p className="text-base font-semibold text-slate-200 mb-1">
             Kéo thả hoặc tải ảnh thịt lên
           </p>
-          <p className="text-xs text-slate-500 max-w-xs mb-5">
+          <p className="text-xs text-slate-400 max-w-xs mb-5">
             Hỗ trợ ảnh chụp cận cảnh thịt tươi sống (JPEG, PNG, WEBP). Khuyên dùng ánh sáng tự nhiên rõ nét.
           </p>
 
@@ -433,7 +433,7 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center space-x-2 shadow-md shadow-emerald-600/20 transition-transform active:scale-95"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center space-x-2 shadow-lg shadow-emerald-600/30 transition-transform active:scale-95"
             >
               <Camera className="w-4 h-4" />
               <span>Chụp ảnh (Camera sau)</span>
@@ -443,9 +443,9 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={() => startLiveCamera('environment')}
-              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs flex items-center space-x-2 shadow-xs transition-transform active:scale-95"
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center space-x-2 transition-transform active:scale-95"
             >
-              <Camera className="w-4 h-4 text-teal-600" />
+              <Camera className="w-4 h-4 text-teal-400" />
               <span>Camera trực tiếp</span>
             </button>
 
@@ -453,9 +453,9 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs flex items-center space-x-2 shadow-xs transition-transform active:scale-95"
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center space-x-2 transition-transform active:scale-95"
             >
-              <ImageIcon className="w-4 h-4 text-slate-500" />
+              <ImageIcon className="w-4 h-4 text-slate-400" />
               <span>Chọn từ thư viện</span>
             </button>
           </div>
@@ -471,18 +471,18 @@ export default function CameraCapture({
             onClick={onStartAnalyze}
             className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm flex items-center justify-center space-x-2.5 transition-all shadow-xl ${
               isScanning
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
-                : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/25 active:scale-[0.99]'
+                ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-700'
+                : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/25 active:scale-[0.99]'
             }`}
           >
             {isScanning ? (
               <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                 <span>AI Đang Phân Tích Quang Phổ...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5 text-white" />
+                <Sparkles className="w-5 h-5 text-slate-950" />
                 <span>Phân Tích Chất Lượng Thịt</span>
               </>
             )}

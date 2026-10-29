@@ -425,7 +425,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen ambient-mint-bg text-slate-800 flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen ambient-dark-bg text-slate-100 flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
       {/* Top Navbar */}
       <Navbar
         serverStatus={serverStatus}
@@ -444,14 +444,14 @@ export default function App() {
       <main className="flex-1 max-w-xl sm:max-w-2xl mx-auto w-full px-4 py-5 sm:py-8 space-y-6">
         {/* Welcome Headline */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100/80 border border-emerald-300/80 text-emerald-800 text-xs font-semibold shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold shadow-inner">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>AI Computer Vision & Quang Phổ Màu</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
             Đánh Giá Chất Lượng Thịt Sống & Đồ Chín
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
             Kiểm tra tức thì độ tươi thịt sống và phát hiện ôi thiu, mốc hỏng, màng nhớt vi khuẩn ở thịt đã nấu chín/chế biến.
           </p>
         </div>
@@ -461,17 +461,17 @@ export default function App() {
 
         {/* Backend offline warning banner if needed */}
         {serverStatus === 'offline' && (
-          <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-left flex items-start space-x-3 text-amber-900 shadow-xs">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-2xl bg-[#141b27] border border-amber-500/30 text-xs text-left flex items-start space-x-3 text-amber-300 shadow-md">
+            <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <strong className="block font-semibold text-amber-950">Chế độ Mô phỏng Thông minh (Frontend Standalone)</strong>
-              <span className="text-amber-800">
-                Backend FastAPI chưa kết nối tại <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">http://localhost:8000</code>. MeatGuard đang tự động kích hoạt bộ giả lập quang học client để bạn vẫn có thể trải nghiệm đầy đủ giao diện và hiệu ứng quét laser ngay lúc này!
+              <strong className="block font-semibold text-amber-200">Chế độ Mô phỏng Thông minh (Frontend Standalone)</strong>
+              <span className="text-amber-300/90">
+                Backend FastAPI chưa kết nối tại <code className="bg-[#0B0F17] px-1 py-0.5 rounded text-amber-200 font-mono">http://localhost:8000</code>. MeatGuard đang tự động kích hoạt bộ giả lập quang học client để bạn vẫn có thể trải nghiệm đầy đủ giao diện và hiệu ứng quét laser ngay lúc này!
               </span>
             </div>
             <button
               onClick={checkServerHealth}
-              className="p-1.5 rounded-lg bg-amber-200/60 hover:bg-amber-200 text-amber-900 transition-colors"
+              className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition-colors"
               title="Thử kết nối lại"
             >
               <RefreshCw className="w-4 h-4" />
@@ -481,8 +481,8 @@ export default function App() {
 
         {/* Error message alert */}
         {errorMessage && (
-          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-left flex items-center space-x-2.5 text-rose-800 shadow-xs animate-shake">
-            <ShieldAlert className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-left flex items-center space-x-2.5 text-rose-300 shadow-md animate-shake">
+            <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0" />
             <span className="flex-1">{errorMessage}</span>
           </div>
         )}
@@ -525,7 +525,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-emerald-100/80 bg-white/75 backdrop-blur-md py-5 text-center text-xs text-slate-500">
+      <footer className="w-full border-t border-slate-800/80 bg-[#0B0F17]/90 backdrop-blur-md py-5 text-center text-xs text-slate-500">
         <p>
           MeatGuard © {new Date().getFullYear()} — AI Meat Freshness Scanner. Mobile-First Edge Vision.
         </p>
