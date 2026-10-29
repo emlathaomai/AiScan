@@ -10,9 +10,11 @@ import {
   AlertCircle,
   Utensils,
   Beef,
-  Bot
+  Bot,
+  Loader2
 } from 'lucide-react';
 import ScannerOverlay from './ScannerOverlay';
+import { optimizeImageForMobile } from '../utils/imageOptimizer';
 
 export default function CameraCapture({
   imagePreview,
@@ -30,6 +32,7 @@ export default function CameraCapture({
   const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
   const [cameraFacing, setCameraFacing] = useState('environment'); // 'environment' (rear) or 'user' (front)
   const [cameraError, setCameraError] = useState(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -94,19 +97,27 @@ export default function CameraCapture({
     if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    canvas.width = Math.min(video.videoWidth || 1280, 1280);
+    canvas.height = Math.min(video.videoHeight || 720, 720);
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Create thumbnail
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 120;
+    thumbCanvas.height = Math.round((120 * canvas.height) / canvas.width);
+    const thumbCtx = thumbCanvas.getContext('2d');
+    thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+    const thumbnailUrl = thumbCanvas.toDataURL('image/jpeg', 0.65);
 
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], `meat_camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const previewUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const previewUrl = canvas.toDataURL('image/jpeg', 0.82);
         stopLiveCamera();
-        onImageSelected(file, previewUrl);
+        onImageSelected(file, previewUrl, thumbnailUrl);
       }
-    }, 'image/jpeg', 0.95);
+    }, 'image/jpeg', 0.82);
   };
 
   // Handle standard file inputs
@@ -115,18 +126,31 @@ export default function CameraCapture({
     if (file) {
       processSelectedFile(file);
     }
+    // Reset inputs so user can re-select the same file if needed
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
-  const processSelectedFile = (file) => {
+  const processSelectedFile = async (file) => {
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn một file hình ảnh (JPEG, PNG, WEBP).');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      onImageSelected(file, reader.result);
-    };
-    reader.readAsDataURL(file);
+    setIsOptimizing(true);
+    try {
+      // Downscale giant mobile phone camera photos in background memory
+      const { file: optimizedFile, previewUrl, thumbnailUrl } = await optimizeImageForMobile(file);
+      onImageSelected(optimizedFile, previewUrl, thumbnailUrl);
+    } catch (err) {
+      console.warn('Image optimization failed, using original:', err);
+      const reader = new FileReader();
+      reader.onload = () => {
+        onImageSelected(file, reader.result, '');
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
   // Drag and Drop handlers
@@ -323,6 +347,12 @@ export default function CameraCapture({
       ) : imagePreview ? (
         /* Image Preview with Scanner Overlay */
         <div className="relative w-full aspect-square max-h-[440px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-750 shadow-2xl flex items-center justify-center group">
+          {isOptimizing && (
+            <div className="absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-2 text-emerald-400">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <span className="text-xs font-semibold">Đang tối ưu dung lượng ảnh...</span>
+            </div>
+          )}
           <img
             src={imagePreview}
             alt="Meat Preview"
@@ -369,6 +399,12 @@ export default function CameraCapture({
           }`}
           onClick={() => fileInputRef.current?.click()}
         >
+          {isOptimizing && (
+            <div className="absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-2 text-emerald-400">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <span className="text-xs font-semibold">Đang tối ưu dung lượng ảnh...</span>
+            </div>
+          )}
           <div className="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 transition-colors mb-4 shadow-inner">
             <Upload className="w-8 h-8 text-emerald-400" />
           </div>

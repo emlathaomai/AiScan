@@ -16,15 +16,32 @@ import {
 import confetti from 'canvas-confetti';
 
 export default function ResultCard({ result }) {
+  const freshness_status = result?.freshness_status;
+
+  // Trigger celebration confetti if fresh (unconditional hook)
+  useEffect(() => {
+    if (freshness_status === 'fresh') {
+      try {
+        confetti({
+          particleCount: 45,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#10b981', '#34d399', '#6ee7b7']
+        });
+      } catch {
+        // Safe fallback
+      }
+    }
+  }, [freshness_status]);
+
   if (!result) return null;
 
   const {
-    freshness_status,
     status_title,
     status_description,
     confidence,
     probabilities = { fresh: 0, aging: 0, frozen_damaged: 0, spoiled: 0 },
-    detected_meat,
+    detected_meat: _detected_meat,
     meat_name_vn,
     detected_type,
     risk_level,
@@ -36,22 +53,6 @@ export default function ResultCard({ result }) {
     model_mode,
     inference_time_ms
   } = result;
-
-  // Trigger celebration confetti if fresh
-  useEffect(() => {
-    if (freshness_status === 'fresh') {
-      try {
-        confetti({
-          particleCount: 45,
-          spread: 60,
-          origin: { y: 0.7 },
-          colors: ['#10b981', '#34d399', '#6ee7b7']
-        });
-      } catch (e) {
-        // Safe fallback
-      }
-    }
-  }, [freshness_status]);
 
   // Color config according to status
   const statusTheme = {
@@ -106,13 +107,13 @@ export default function ResultCard({ result }) {
     tag: 'CHƯA RÕ'
   };
 
-  const StatusIcon = statusTheme.Icon;
+  const StatusIcon = statusTheme?.Icon || CheckCircle;
 
-  // Format percentages
-  const pFresh = Math.round((probabilities.fresh || 0) * 100);
-  const pAging = Math.round((probabilities.aging || 0) * 100);
-  const pFrozen = Math.round((probabilities.frozen_damaged || 0) * 100);
-  const pSpoiled = Math.round((probabilities.spoiled || 0) * 100);
+  // Format percentages safely
+  const pFresh = Math.round(((probabilities && probabilities.fresh) || 0) * 100);
+  const pAging = Math.round(((probabilities && probabilities.aging) || 0) * 100);
+  const pFrozen = Math.round(((probabilities && probabilities.frozen_damaged) || 0) * 100);
+  const pSpoiled = Math.round(((probabilities && probabilities.spoiled) || 0) * 100);
 
   return (
     <div className="w-full bg-[#121824]/90 border border-slate-800/80 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-6 text-left animate-fadeIn backdrop-blur-sm">

@@ -66,26 +66,25 @@ export default function InspectionCertificate({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const certificateRef = useRef(null);
 
+  // Persistent fallback values defined unconditionally at top level
+  const fallbackCertId = useRef(
+    customCertId || `#MG-2026-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+  );
+  const fallbackTimestamp = useRef(
+    new Date().toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  );
+
   if (!result) return null;
 
-  // Generate or reuse persistent Certificate ID and Date
-  const certId = useRef(
-    customCertId ||
-      result.certId ||
-      `#MG-2026-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
-  ).current;
-
-  const timestamp = useRef(
-    result.scannedAt ||
-      new Date().toLocaleString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })
-  ).current;
+  const certId = customCertId || result.certId || fallbackCertId.current;
+  const timestamp = result.scannedAt || fallbackTimestamp.current;
 
   const {
     freshness_status = 'fresh',
@@ -323,7 +322,7 @@ export default function InspectionCertificate({
     }
   };
 
-  const StampIcon = certGrade.Icon;
+  const StampIcon = certGrade?.Icon || CheckCircle;
 
   return (
     <div className="w-full space-y-3.5">

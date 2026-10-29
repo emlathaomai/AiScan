@@ -2,7 +2,9 @@ import React from 'react';
 import { History, Trash2, ArrowUpRight, Clock, ShieldCheck } from 'lucide-react';
 
 export default function ScanHistory({ history, onSelectHistoryItem, onClearHistory }) {
-  if (!history || history.length === 0) {
+  const safeHistory = Array.isArray(history) ? history : [];
+
+  if (safeHistory.length === 0) {
     return (
       <div className="w-full bg-[#121824]/90 border border-slate-800/80 rounded-3xl p-6 shadow-2xl text-center backdrop-blur-sm">
         <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mx-auto text-slate-500 mb-2">
@@ -74,7 +76,7 @@ export default function ScanHistory({ history, onSelectHistoryItem, onClearHisto
       </div>
 
       <div className="space-y-2.5">
-        {history.map((item) => {
+        {safeHistory.map((item) => {
           const badge = getStatusBadge(item.freshness_status);
           return (
             <div

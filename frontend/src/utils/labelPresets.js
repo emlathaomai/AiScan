@@ -127,7 +127,15 @@ export function generateSampleLabelCanvas(presetKey) {
   ctx.font = '13px monospace';
   ctx.fillText('8 935028 109284', 255, 402);
 
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+  // Small thumbnail
+  const thumbCanvas = document.createElement('canvas');
+  thumbCanvas.width = 120;
+  thumbCanvas.height = 78;
+  const thumbCtx = thumbCanvas.getContext('2d');
+  thumbCtx?.drawImage(canvas, 0, 0, 120, 78);
+  const thumbnailUrl = thumbCanvas.toDataURL('image/jpeg', 0.65);
 
   // Convert to File
   const byteString = atob(dataUrl.split(',')[1]);
@@ -139,5 +147,5 @@ export function generateSampleLabelCanvas(presetKey) {
   const blob = new Blob([ab], { type: 'image/jpeg' });
   const file = new File([blob], filename, { type: 'image/jpeg' });
 
-  return { dataUrl, file, filename };
+  return { dataUrl, file, filename, thumbnailUrl };
 }

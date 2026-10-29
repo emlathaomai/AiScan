@@ -11,6 +11,7 @@ import LabelScannerView from './components/LabelScannerView';
 import ExpiryResultCard from './components/ExpiryResultCard';
 import SmartFridge from './components/SmartFridge';
 import { generateSampleLabelCanvas } from './utils/labelPresets';
+import { safeSetItem, safeGetItem, safeRemoveItem } from './utils/safeStorage';
 import { ShieldAlert, Sparkles, AlertCircle, RefreshCw, ShieldCheck, Tag, Refrigerator } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined
@@ -27,6 +28,7 @@ export default function App() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageThumbnail, setImageThumbnail] = useState('');
   const [meatCategory, setMeatCategory] = useState('auto'); // 'auto' | 'raw' | 'cooked'
   const [meatHint, setMeatHint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -36,6 +38,7 @@ export default function App() {
   // Label OCR State
   const [labelFile, setLabelFile] = useState(null);
   const [labelPreview, setLabelPreview] = useState(null);
+  const [labelThumbnail, setLabelThumbnail] = useState('');
   const [isLabelScanning, setIsLabelScanning] = useState(false);
   const [labelResult, setLabelResult] = useState(null);
   const [isAddedToFridge, setIsAddedToFridge] = useState(false);
@@ -43,8 +46,8 @@ export default function App() {
   // Smart Fridge State
   const [fridgeItems, setFridgeItems] = useState(() => {
     try {
-      const saved = localStorage.getItem(FRIDGE_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      const saved = safeGetItem(FRIDGE_STORAGE_KEY, []);
+      return Array.isArray(saved) ? saved : [];
     } catch {
       return [];
     }
@@ -117,9 +120,9 @@ export default function App() {
   // 1. Load history from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setHistory(JSON.parse(saved));
+      const saved = safeGetItem(STORAGE_KEY, []);
+      if (Array.isArray(saved)) {
+        setHistory(saved);
       }
     } catch (e) {
       console.warn('Could not read localStorage history:', e);
@@ -168,10 +171,13 @@ export default function App() {
         });
       }
 
+      // Safeguard: Never save 20MB raw Base64 into localStorage to prevent QuotaExceededError crash
+      const safeThumb = (thumbnail && typeof thumbnail === 'string' && thumbnail.length < 80000) ? thumbnail : '';
+
       const newItem = {
         id: 'scan_' + Date.now(),
         timestamp: Date.now(),
-        thumbnail: thumbnail,
+        thumbnail: safeThumb,
         freshness_status: result.freshness_status,
         status_title: result.status_title,
         confidence: result.confidence,
@@ -180,8 +186,10 @@ export default function App() {
       };
 
       setHistory((prevHistory) => {
-        const updated = [newItem, ...prevHistory.filter((i) => i.id !== newItem.id)].slice(0, 5);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        const list = Array.isArray(prevHistory) ? prevHistory : [];
+        const updated = [newItem, ...list.filter((i) => i.id !== newItem.id)].slice(0, 5);
+        // Save safely with quota error trapping
+        safeSetItem(STORAGE_KEY, updated);
         return updated;
       });
     } catch (e) {
@@ -193,7 +201,7 @@ export default function App() {
   const handleClearHistory = () => {
     if (window.confirm('Bạn có chắc muốn xóa 5 lịch sử quét gần nhất không?')) {
       setHistory([]);
-      localStorage.removeItem(STORAGE_KEY);
+      safeRemoveItem(STORAGE_KEY);
     }
   };
 
@@ -203,6 +211,7 @@ export default function App() {
       setAnalysisResult(item.fullResult);
       if (item.thumbnail) {
         setImagePreview(item.thumbnail);
+        setImageThumbnail(item.thumbnail);
       }
       setTimeout(() => {
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -211,17 +220,20 @@ export default function App() {
   };
 
   // 6. Handle image selected or dropped
-  const handleImageSelected = (file, previewUrl) => {
+  const handleImageSelected = (file, previewUrl, thumbnailUrl = '') => {
     setSelectedFile(file);
     setImagePreview(previewUrl);
+    setImageThumbnail(thumbnailUrl || (previewUrl && previewUrl.length < 80000 ? previewUrl : ''));
     setAnalysisResult(null);
     setErrorMessage(null);
+    setIsVerifiedFromUrl(false);
   };
 
   // 8. Reset image
   const handleResetImage = () => {
     setSelectedFile(null);
     setImagePreview(null);
+    setImageThumbnail('');
     setAnalysisResult(null);
     setErrorMessage(null);
   };
@@ -441,15 +453,24 @@ export default function App() {
           formData.append('meat_hint', meatHint);
         }
 
+        // Fast mobile timeout (12s) to prevent infinite hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         const apiPromise = fetch(`${API_BASE_URL}/api/analyze`, {
           method: 'POST',
           body: formData,
+          signal: controller.signal
         }).then(async (response) => {
+          clearTimeout(timeoutId);
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
             throw new Error(errData.detail || 'Lỗi khi gửi dữ liệu phân tích đến máy chủ.');
           }
           return response.json();
+        }).catch((err) => {
+          clearTimeout(timeoutId);
+          throw err;
         });
 
         const [apiResult] = await Promise.all([apiPromise, minDelayPromise]);
@@ -464,7 +485,7 @@ export default function App() {
       }
 
       setAnalysisResult(data);
-      saveToHistory(data, imagePreview);
+      saveToHistory(data, imageThumbnail || imagePreview);
 
       // Scroll to result smoothly
       setTimeout(() => {
@@ -575,9 +596,10 @@ export default function App() {
   };
 
   // 12. Label OCR Handlers
-  const handleLabelImageSelected = (file, previewUrl) => {
+  const handleLabelImageSelected = (file, previewUrl, thumbnailUrl = '') => {
     setLabelFile(file);
     setLabelPreview(previewUrl);
+    setLabelThumbnail(thumbnailUrl || (previewUrl && previewUrl.length < 80000 ? previewUrl : ''));
     setLabelResult(null);
     setErrorMessage(null);
     setIsAddedToFridge(false);
@@ -586,6 +608,7 @@ export default function App() {
   const handleResetLabelImage = () => {
     setLabelFile(null);
     setLabelPreview(null);
+    setLabelThumbnail('');
     setLabelResult(null);
     setErrorMessage(null);
     setIsAddedToFridge(false);
@@ -593,9 +616,10 @@ export default function App() {
 
   const handleSelectSamplePreset = (presetKey) => {
     try {
-      const { dataUrl, file } = generateSampleLabelCanvas(presetKey);
+      const { dataUrl, file, thumbnailUrl } = generateSampleLabelCanvas(presetKey);
       setLabelFile(file);
       setLabelPreview(dataUrl);
+      setLabelThumbnail(thumbnailUrl || dataUrl);
       setLabelResult(null);
       setErrorMessage(null);
       setIsAddedToFridge(false);
@@ -622,15 +646,24 @@ export default function App() {
         const formData = new FormData();
         formData.append('file', labelFile);
 
+        // Fast mobile timeout (12s) to prevent infinite hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         const apiPromise = fetch(`${API_BASE_URL}/api/scan-label`, {
           method: 'POST',
           body: formData,
+          signal: controller.signal
         }).then(async (response) => {
+          clearTimeout(timeoutId);
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
             throw new Error(errData.detail || 'Lỗi khi quét tem nhãn trên máy chủ.');
           }
           return response.json();
+        }).catch((err) => {
+          clearTimeout(timeoutId);
+          throw err;
         });
 
         const [apiResult] = await Promise.all([apiPromise, minDelayPromise]);
@@ -667,6 +700,12 @@ export default function App() {
   // 13. Smart Fridge Handlers
   const handleAddToFridge = () => {
     if (!labelResult) return;
+
+    // Safeguard: use tiny thumbnail for fridge localStorage
+    const safeThumb = (labelThumbnail && typeof labelThumbnail === 'string' && labelThumbnail.length < 80000)
+      ? labelThumbnail
+      : (labelPreview && labelPreview.length < 80000 ? labelPreview : '');
+
     const newItem = {
       id: 'fridge_' + Date.now(),
       product_name: labelResult.product_name,
@@ -677,16 +716,13 @@ export default function App() {
       remaining_text: labelResult.remaining_text,
       expiry_badge: labelResult.expiry_badge,
       added_at: new Date().toISOString(),
-      image: labelPreview
+      image: safeThumb
     };
 
     setFridgeItems((prev) => {
-      const updated = [newItem, ...prev.filter(item => item.product_name !== newItem.product_name)];
-      try {
-        localStorage.setItem(FRIDGE_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not save fridge to localStorage:', e);
-      }
+      const list = Array.isArray(prev) ? prev : [];
+      const updated = [newItem, ...list.filter(item => item.product_name !== newItem.product_name)];
+      safeSetItem(FRIDGE_STORAGE_KEY, updated);
       return updated;
     });
     setIsAddedToFridge(true);
@@ -694,23 +730,16 @@ export default function App() {
 
   const handleRemoveFridgeItem = (id) => {
     setFridgeItems((prev) => {
-      const updated = prev.filter(item => item.id !== id);
-      try {
-        localStorage.setItem(FRIDGE_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not save fridge to localStorage:', e);
-      }
+      const list = Array.isArray(prev) ? prev : [];
+      const updated = list.filter(item => item.id !== id);
+      safeSetItem(FRIDGE_STORAGE_KEY, updated);
       return updated;
     });
   };
 
   const handleClearFridge = () => {
     setFridgeItems([]);
-    try {
-      localStorage.removeItem(FRIDGE_STORAGE_KEY);
-    } catch (e) {
-      console.warn('Could not clear fridge localStorage:', e);
-    }
+    safeRemoveItem(FRIDGE_STORAGE_KEY);
   };
 
   return (

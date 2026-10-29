@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Camera,
   Upload,
@@ -9,8 +9,10 @@ import {
   Info,
   CheckCircle,
   AlertTriangle,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
+import { optimizeImageForMobile } from '../utils/imageOptimizer';
 
 export default function LabelScannerView({
   imagePreview,
@@ -21,21 +23,39 @@ export default function LabelScannerView({
   onStartScanLabel,
   onSelectSamplePreset
 }) {
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      onImageSelected(file, previewUrl);
+      setIsOptimizing(true);
+      try {
+        const { file: optimizedFile, previewUrl, thumbnailUrl } = await optimizeImageForMobile(file);
+        onImageSelected(optimizedFile, previewUrl, thumbnailUrl);
+      } catch (err) {
+        console.warn('Label optimization fallback:', err);
+        const previewUrl = URL.createObjectURL(file);
+        onImageSelected(file, previewUrl, '');
+      } finally {
+        setIsOptimizing(false);
+      }
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   return (
     <div className="w-full bg-[#121824]/90 border border-slate-800/80 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-md text-center space-y-5">
       {/* Viewfinder / Image Preview Zone */}
       <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-[#0B0F17] rounded-2xl overflow-hidden border border-slate-800 shadow-inner flex flex-col items-center justify-center group">
+        {isOptimizing && (
+          <div className="absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-2 text-teal-400">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="text-xs font-semibold">Đang tối ưu dung lượng tem nhãn...</span>
+          </div>
+        )}
         {imagePreview ? (
           <>
             <img

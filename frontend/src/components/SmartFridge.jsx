@@ -20,7 +20,9 @@ export default function SmartFridge({
 }) {
   const [isOpen, setIsOpen] = useState(true);
 
-  if (!items || items.length === 0) {
+  const safeItems = Array.isArray(items) ? items : [];
+
+  if (safeItems.length === 0) {
     return (
       <div className="w-full bg-[#121824]/90 border border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-xl text-left space-y-3 backdrop-blur-sm">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -38,9 +40,9 @@ export default function SmartFridge({
   }
 
   // Count items by status
-  const safeCount = items.filter(it => it.expiry_status === 'safe').length;
-  const expiringCount = items.filter(it => it.expiry_status === 'expiring_soon').length;
-  const expiredCount = items.filter(it => it.expiry_status === 'expired').length;
+  const safeCount = safeItems.filter(it => it.expiry_status === 'safe').length;
+  const expiringCount = safeItems.filter(it => it.expiry_status === 'expiring_soon').length;
+  const expiredCount = safeItems.filter(it => it.expiry_status === 'expired').length;
 
   return (
     <div className="w-full bg-[#121824]/90 border border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-2xl text-left space-y-4 backdrop-blur-sm transition-all">
@@ -54,7 +56,7 @@ export default function SmartFridge({
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-white">Tủ Lạnh Ảo MeatGuard</h3>
               <span className="px-2 py-0.5 rounded-full bg-slate-800 text-teal-300 text-[10px] font-mono font-bold border border-slate-700">
-                {items.length} món
+                {safeItems.length} món
               </span>
             </div>
             {/* Quick summary chips */}
@@ -79,7 +81,7 @@ export default function SmartFridge({
         </div>
 
         <div className="flex items-center space-x-2">
-          {items.length > 0 && (
+          {safeItems.length > 0 && (
             <button
               type="button"
               onClick={onClearFridge}
@@ -105,7 +107,7 @@ export default function SmartFridge({
       {/* Item List */}
       {isOpen && (
         <div className="space-y-2.5 pt-1">
-          {items.map((item) => {
+          {safeItems.map((item) => {
             const isExpired = item.expiry_status === 'expired';
             const isExpiring = item.expiry_status === 'expiring_soon';
 

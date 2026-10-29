@@ -83,7 +83,7 @@ export default function ExpiryResultCard({
   };
 
   const theme = themes[expiry_status] || themes.safe;
-  const StatusIcon = theme.Icon;
+  const StatusIcon = theme?.Icon || ShieldCheck;
 
   return (
     <div className={`w-full bg-[#121824]/90 border ${theme.cardBorder} rounded-3xl p-5 sm:p-7 shadow-2xl ${theme.glow} text-left space-y-5 backdrop-blur-md transition-all duration-300`}>
