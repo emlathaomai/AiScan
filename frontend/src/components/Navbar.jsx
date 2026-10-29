@@ -19,7 +19,7 @@ export default function Navbar({ serverStatus, onCheckServer, activeMode, onOpen
                 AI v1.0
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 leading-none">Freshness Scanner</p>
+            <p className="text-[11px] text-slate-400 leading-none">Make by Venola la la</p>
           </div>
         </div>
 
