@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle2, AlertTriangle, ShieldCheck, FileText, ArrowRight } from 'lucide-react';
 
 export default function GuideModal({ isOpen, onClose }) {
@@ -27,7 +28,9 @@ export default function GuideModal({ isOpen, onClose }) {
     onClose();
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn transition-opacity duration-200">
       {/* Click outside backdrop to close */}
       <div className="absolute inset-0" onClick={handleClose} />
@@ -113,6 +116,7 @@ export default function GuideModal({ isOpen, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
