@@ -12,11 +12,12 @@ from fastapi.responses import JSONResponse
 from PIL import Image
 
 from model_loader import MeatFreshnessAnalyzer
+from label_scanner import label_scanner
 
 app = FastAPI(
-    title="MeatGuard API - AI Meat Freshness Scanner",
-    description="API cung cấp nhận diện và đánh giá độ tươi sống của thịt (Bò, Lợn, Gia cầm) qua hình ảnh.",
-    version="1.0.0"
+    title="MeatGuard API - AI Meat Freshness & Label Scanner",
+    description="API cung cấp nhận diện độ tươi sống của thịt và quét hạn sử dụng tem nhãn siêu thị qua hình ảnh.",
+    version="1.2.0"
 )
 
 # Enable CORS for Frontend development and production
@@ -54,7 +55,9 @@ def health_check():
         "supported_categories": ["auto", "raw", "cooked"],
         "supported_meats": ["beef", "pork", "poultry", "auto_detect"],
         "supported_cooked_meats": ["boiled_pork", "braised_pork", "fried_grilled", "processed_sausage"],
-        "version": "1.1.0"
+        "ocr_engine": "tesseract" if label_scanner.tesseract_available else "mock_supermarket_fallback",
+        "tesseract_available": label_scanner.tesseract_available,
+        "version": "1.2.0"
     }
 
 
@@ -123,6 +126,70 @@ async def analyze_meat(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Đã xảy ra lỗi nội bộ trong quá trình phân tích ảnh: {str(e)}"
+        )
+
+
+@app.post("/api/scan-label")
+async def scan_label(
+    file: UploadFile = File(...)
+):
+    """
+    Endpoint receives label image file via multipart/form-data.
+    Extracts text, product name, manufacturing date (NSX), expiration date (HSD),
+    computes time remaining and safety status.
+    """
+    # 1. Validate file presence
+    if not file:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vui lòng cung cấp file ảnh tem nhãn cần quét."
+        )
+
+    # 2. Validate MIME type
+    if file.content_type and not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Định dạng file không hợp lệ ({file.content_type}). Vui lòng tải file ảnh (JPEG, PNG, WEBP)."
+        )
+
+    try:
+        contents = await file.read()
+        if len(contents) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File ảnh rỗng. Vui lòng chọn ảnh hợp lệ."
+            )
+
+        if len(contents) > 20 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Kích thước ảnh quá lớn (vượt quá 20MB)."
+            )
+
+        try:
+            image = Image.open(io.BytesIO(contents))
+            image.verify()
+            image = Image.open(io.BytesIO(contents))
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Không thể đọc dữ liệu ảnh. Ảnh có thể bị hỏng."
+            )
+
+        # 3. Scan label with LabelScanner
+        scan_result = label_scanner.scan_label(image, filename=file.filename or "")
+        scan_result["filename"] = file.filename
+        scan_result["image_size"] = {"width": image.width, "height": image.height}
+
+        return JSONResponse(status_code=status.HTTP_200_OK, content=scan_result)
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"[MeatGuard OCR Error] Unexpected error during label scan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Đã xảy ra lỗi nội bộ trong quá trình quét nhãn: {str(e)}"
         )
 
 
