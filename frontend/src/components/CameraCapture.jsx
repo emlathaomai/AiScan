@@ -205,9 +205,7 @@ export default function CameraCapture({
             disabled={isScanning}
             onClick={() => {
               onMeatCategoryChange?.('raw');
-              if (meatHint && !['beef', 'pork', 'poultry'].includes(meatHint)) {
-                onMeatHintChange?.('');
-              }
+              onMeatHintChange?.('');
             }}
             className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               meatCategory === 'raw'
@@ -224,9 +222,7 @@ export default function CameraCapture({
             disabled={isScanning}
             onClick={() => {
               onMeatCategoryChange?.('cooked');
-              if (meatHint && !['boiled_pork', 'braised_pork', 'fried_grilled', 'processed_sausage'].includes(meatHint)) {
-                onMeatHintChange?.('');
-              }
+              onMeatHintChange?.('');
             }}
             className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               meatCategory === 'cooked'
@@ -239,64 +235,24 @@ export default function CameraCapture({
           </button>
         </div>
 
-        {/* Dynamic Sub-Category Filters */}
-        {meatCategory === 'raw' && (
-          <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 animate-fadeIn">
-            <span className="text-[11px] text-slate-400 flex-shrink-0">Loại thịt:</span>
-            {[
-              { id: '', label: 'Tất cả thịt sống' },
-              { id: 'beef', label: '🥩 Thịt Bò' },
-              { id: 'pork', label: '🥩 Thịt Lợn' },
-              { id: 'poultry', label: '🍗 Gia cầm' },
-            ].map((type) => (
-              <button
-                key={type.id}
-                type="button"
-                disabled={isScanning}
-                onClick={() => onMeatHintChange(type.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  meatHint === type.id
-                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                {type.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {meatCategory === 'cooked' && (
-          <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 animate-fadeIn">
-            <span className="text-[11px] text-slate-400 flex-shrink-0">Món ăn:</span>
-            {[
-              { id: '', label: 'Tất cả đồ chín' },
-              { id: 'boiled_pork', label: '🍲 Thịt Luộc' },
-              { id: 'braised_pork', label: '🥘 Thịt Kho / Rim' },
-              { id: 'fried_grilled', label: '🍖 Chiên / Nướng' },
-              { id: 'processed_sausage', label: '🌭 Giò / Xúc Xích' },
-            ].map((type) => (
-              <button
-                key={type.id}
-                type="button"
-                disabled={isScanning}
-                onClick={() => onMeatHintChange(type.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  meatHint === type.id
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                {type.label}
-              </button>
-            ))}
-          </div>
-        )}
-
         {meatCategory === 'auto' && (
           <p className="text-[11px] text-slate-400 pt-0.5 italic flex items-center gap-1.5">
             <Sparkles className="w-3 h-3 text-emerald-400 flex-shrink-0" />
             AI sẽ tự động nhận diện ảnh là thịt sống hay đồ đã nấu chín trước khi áp dụng thuật toán kiểm định.
+          </p>
+        )}
+
+        {meatCategory === 'raw' && (
+          <p className="text-[11px] text-slate-400 pt-0.5 italic flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-rose-400 flex-shrink-0" />
+            Chuyên sâu kiểm định độ tươi, sắc tố myoglobin và dấu hiệu ươn hỏng cho thịt tươi sống.
+          </p>
+        )}
+
+        {meatCategory === 'cooked' && (
+          <p className="text-[11px] text-slate-400 pt-0.5 italic flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+            Chuyên sâu phát hiện màng nhớt vi khuẩn, nấm mốc và mỡ đông lạnh cho thịt đã chế biến.
           </p>
         )}
       </div>
