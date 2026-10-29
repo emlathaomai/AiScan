@@ -209,16 +209,16 @@ class MeatFreshnessAnalyzer:
 
     def _format_result(self, status, confidence, probs, detected_meat, r_mean, g_mean, b_mean, hue_degrees, s_val, v_val, rg_ratio):
         status_titles = {
-            "fresh": "Tươi (Fresh)",
-            "aging": "Bắt đầu suy giảm (Aging / Half-Fresh)",
-            "frozen_damaged": "Cháy đông / Đá tuyết (Frozen Damaged)",
-            "spoiled": "Ươn / Hỏng (Spoiled)"
+            "fresh": "Tươi",
+            "aging": "Bắt đầu suy giảm",
+            "frozen_damaged": "Cháy đông / Đá tuyết",
+            "spoiled": "Ươn / Hỏng"
         }
 
         status_descs = {
             "fresh": "Thịt tươi ngon, mô cơ săn chắc, màu sắc tự nhiên, an toàn để chế biến tiêu thụ.",
             "aging": "Thịt đã bắt đầu oxy hóa metmyoglobin, giảm độ tươi. Cần chế biến ngay trong ngày và xử lý nhiệt kỹ.",
-            "frozen_damaged": "Thịt có dấu hiệu cháy lạnh (Freezer Burn) hoặc đóng đá tuyết dày do để ngăn đông lâu hoặc bao gói hở khí. Hơi nước thăng hoa khiến mô xơ khô cứng, mất vị ngọt tự nhiên.",
+            "frozen_damaged": "Thịt có dấu hiệu cháy lạnh hoặc đóng đá tuyết dày do để ngăn đông lâu hoặc bao gói hở khí. Hơi nước thăng hoa khiến mô xơ khô cứng, mất vị ngọt tự nhiên.",
             "spoiled": "Thịt đã biến chất, có dấu hiệu ươn hỏng hoặc nhiễm khuẩn bề mặt. Tuyệt đối KHÔNG nên ăn để tránh ngộ độc thực phẩm."
         }
 
@@ -226,33 +226,33 @@ class MeatFreshnessAnalyzer:
             "fresh": {
                 "headline": "Thịt đạt chuẩn tươi sống",
                 "storage": "Bảo quản ngăn mát tủ lạnh (0°C - 4°C) dùng trong 1-2 ngày, hoặc cấp đông (-18°C) để giữ lâu dài.",
-                "cooking": "Thích hợp chế biến mọi món ăn (xào, nướng, lẩu, bít tết).",
-                "risk_level": "Thấp (An toàn)"
+                "cooking": "Thích hợp chế biến mọi món ăn như xào, nướng, lẩu, bít tết.",
+                "risk_level": "Thấp - An toàn"
             },
             "aging": {
                 "headline": "Cần nấu chín kỹ ngay lập tức",
                 "storage": "Không nên tiếp tục để ngăn mát. Hãy sơ chế, tẩm ướp gia vị và nấu chín hoàn toàn trong hôm nay.",
                 "cooking": "Nên dùng cho các món hầm, kho kỹ hoặc ninh lâu. Đảm bảo nhiệt độ tâm thịt đạt tối thiểu 75°C.",
-                "risk_level": "Trung bình (Cần lưu ý)"
+                "risk_level": "Trung bình - Cần lưu ý"
             },
             "frozen_damaged": {
                 "headline": "Thịt bị cháy lạnh / Đóng đá tuyết",
                 "storage": "Nên rã đông chậm trong ngăn mát (0-4°C). Cắt gọt bỏ các mảng xơ trắng xám khô ráp bên ngoài.",
-                "cooking": "Không thích hợp làm bít tết hoặc xào (thịt sẽ khô bã và dai). Nên thái mỏng, tẩm ướp đậm đà hoặc dùng nấu canh, hầm kỹ, xay nhuyễn.",
-                "risk_level": "Trung bình (Không ngộ độc nhưng mất chất lượng ẩm thực)"
+                "cooking": "Không thích hợp làm bít tết hoặc xào vì thịt sẽ khô bã và dai. Nên thái mỏng, tẩm ướp đậm đà hoặc dùng nấu canh, hầm kỹ, xay nhuyễn.",
+                "risk_level": "Trung bình - Mất chất lượng"
             },
             "spoiled": {
                 "headline": "Cảnh báo nguy cơ ngộ độc",
                 "storage": "Vứt bỏ ngay lập tức vào thùng rác kín. Khử khuẩn các dụng cụ và bề mặt dao thớt đã tiếp xúc.",
                 "cooking": "Nhiệt độ đun nấu thông thường không thể loại bỏ hoàn toàn độc tố vi khuẩn.",
-                "risk_level": "Nguy hiểm (Tuyệt đối không ăn)"
+                "risk_level": "Nguy hiểm - Tuyệt đối không ăn"
             }
         }
 
         meat_names_vn = {
-            "beef": "Thịt bò (Beef)",
-            "pork": "Thịt lợn / heo (Pork)",
-            "poultry": "Gia cầm / Gà (Poultry)",
+            "beef": "Thịt bò",
+            "pork": "Thịt lợn / heo",
+            "poultry": "Gia cầm / Gà",
             "unknown": "Thịt tươi sống"
         }
 
@@ -278,7 +278,7 @@ class MeatFreshnessAnalyzer:
             ],
             "frozen_damaged": [
                 "Lớp tinh thể đá tuyết bám phủ bề mặt",
-                "Mô xơ khô ráp do mất nước thăng hoa (Freezer Burn)",
+                "Mô xơ khô ráp do mất nước thăng hoa",
                 "Bao gói hở khí hoặc để ngăn đông quá thời hạn"
             ],
             "spoiled": [
@@ -719,10 +719,10 @@ class MeatFreshnessAnalyzer:
 
         # Sub-category determination
         sub_categories_vn = {
-            "boiled_pork": "Thịt luộc (Boiled Meat)",
-            "braised_pork": "Thịt kho / rim (Braised Meat)",
-            "fried_grilled": "Thịt chiên / nướng (Fried & Grilled)",
-            "processed_sausage": "Giò chả / Xúc xích (Processed Meat)",
+            "boiled_pork": "Thịt luộc",
+            "braised_pork": "Thịt kho / rim",
+            "fried_grilled": "Thịt chiên / nướng",
+            "processed_sausage": "Giò chả / Xúc xích",
             "cooked_general": "Thịt đã nấu chín"
         }
 
@@ -766,8 +766,8 @@ class MeatFreshnessAnalyzer:
             headline = "Thịt chín đã bị ôi thiu / Nhiễm khuẩn"
             storage_advice = "Vứt bỏ ngay vào thùng rác kín. Rửa sạch và tiệt trùng dụng cụ đựng, hộp bảo quản."
             cooking_advice = "Không được sử dụng lại dưới mọi hình thức đun nấu hay xào rán."
-            risk_title = "Nguy hiểm (Tuyệt đối không ăn)"
-            status_title = "Hỏng / Thiu / Nhiễm khuẩn (Spoiled / Moldy)"
+            risk_title = "Nguy hiểm - Tuyệt đối không ăn"
+            status_title = "Hỏng / Thiu / Nhiễm khuẩn"
             status_desc = "Món ăn đã biến chất vi sinh, xuất hiện màng nhớt hoặc khuẩn nấm. Nhiễm độc tố gây đau bụng, nôn mửa và ngộ độc tiêu hóa cấp tính."
 
         elif has_congealed_fat or (v_val < 0.40 and s_val < 0.25):
@@ -784,8 +784,8 @@ class MeatFreshnessAnalyzer:
             headline = "Cần kiểm tra kỹ & Nấu sôi lại ngay"
             storage_advice = "Không nên tiếp tục trữ lạnh qua ngày mai. Dùng hết trong bữa ăn này."
             cooking_advice = "Phải hâm nóng sôi sùng sục ít nhất 3-5 phút (nhiệt độ tâm đạt tối thiểu 85°C)."
-            risk_title = "Trung bình (Cần hâm sôi kỹ)"
-            status_title = "Cần kiểm tra kỹ (Eat Soon / Questionable)"
+            risk_title = "Trung bình - Cần hâm sôi kỹ"
+            status_title = "Cần kiểm tra kỹ"
             status_desc = "Thịt chín đã để tủ lạnh nhiều ngày, có lớp mỡ đông đục hoặc bề mặt se khô. Cần hâm kỹ trước khi tiêu thụ."
 
         else:
@@ -802,8 +802,8 @@ class MeatFreshnessAnalyzer:
             headline = "Món ăn đạt chuẩn thơm ngon an toàn"
             storage_advice = "Bảo quản trong hộp kín ở ngăn mát tủ lạnh (0-4°C) dùng trong 1-2 ngày."
             cooking_advice = "Có thể dùng ngay hoặc hâm nóng lại nhẹ bằng lò vi sóng/bếp."
-            risk_title = "Thấp (An toàn)"
-            status_title = "Đạt chuẩn an toàn (Good / Safe)"
+            risk_title = "Thấp - An toàn"
+            status_title = "Đạt chuẩn an toàn"
             status_desc = "Món ăn có màu sắc tươi mới, bề mặt tự nhiên, không có dấu hiệu thiu hỏng hoặc nhớt mốc."
 
         # Add garnish exclusion note

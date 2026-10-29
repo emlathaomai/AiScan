@@ -223,7 +223,7 @@ export default function App() {
               sub_category: subCategory,
               meat_name_vn: 'Giò / Xúc Xích Thiu Mốc',
               freshness_status: 'spoiled',
-              status_title: 'Hỏng / Thiu / Nhiễm khuẩn (Spoiled / Moldy)',
+              status_title: 'Hỏng / Thiu / Nhiễm khuẩn',
               status_description: 'Món ăn đã biến chất vi sinh, xuất hiện màng nhớt hoặc khuẩn nấm. Nhiễm độc tố gây đau bụng, nôn mửa và ngộ độc tiêu hóa cấp tính.',
               confidence: confidence,
               risk_level: 'danger',
@@ -235,8 +235,8 @@ export default function App() {
               recommendation: 'CẢNH BÁO NGUY HIỂM: Phát hiện dấu hiệu lên men vi khuẩn hoặc nấm mốc. Tuyệt đối KHÔNG NÊN ĂN dù đã hâm nóng lại! Các độc tố vi khuẩn chịu nhiệt không bị tiêu hủy khi đun nấu lại thông thường.',
               probabilities: { fresh: 0.02, aging: 0.08, frozen_damaged: 0.02, spoiled: 0.88 },
               color_metrics: { avg_red: 145, avg_green: 120, avg_blue: 105, hue_degrees: 30, saturation_pct: 32, brightness_pct: 57, red_green_ratio: 1.21, freshness_index: 15 },
-              cv_inspection: { mold_ratio_pct: 6.8, white_ratio_pct: 4.2, dark_ratio_pct: 8.5, slime_detected: true, mold_threshold_exceeded: true, congealed_fat_exceeded: false, guardrail_verdict: 'Mold Detected (Phát hiện đốm nấm mốc 6.8%)' },
-              safety_advice: { headline: 'Thịt chín đã bị ôi thiu / Nhiễm khuẩn', storage: 'Vứt bỏ ngay vào thùng rác kín.', cooking: 'Tuyệt đối không đun nấu ăn lại.', risk_level: 'Nguy hiểm (Tuyệt đối không ăn)' },
+              cv_inspection: { mold_ratio_pct: 6.8, white_ratio_pct: 4.2, dark_ratio_pct: 8.5, slime_detected: true, mold_threshold_exceeded: true, congealed_fat_exceeded: false, guardrail_verdict: 'Mold Detected - Phát hiện đốm nấm mốc 6.8%' },
+              safety_advice: { headline: 'Thịt chín đã bị ôi thiu / Nhiễm khuẩn', storage: 'Vứt bỏ ngay vào thùng rác kín.', cooking: 'Tuyệt đối không đun nấu ăn lại.', risk_level: 'Nguy hiểm - Tuyệt đối không ăn' },
               model_mode: 'client_fallback_mode',
               inference_time_ms: 540
             });
@@ -250,7 +250,7 @@ export default function App() {
               sub_category: subCategory,
               meat_name_vn: 'Thịt kho / rim để lâu',
               freshness_status: 'aging',
-              status_title: 'Cần kiểm tra kỹ (Eat Soon / Questionable)',
+              status_title: 'Cần kiểm tra kỹ',
               status_description: 'Thịt chín đã để tủ lạnh nhiều ngày, có lớp mỡ đông đục hoặc bề mặt se khô. Cần hâm kỹ trước khi tiêu thụ.',
               confidence: confidence,
               risk_level: 'medium',
@@ -262,8 +262,8 @@ export default function App() {
               recommendation: 'Thịt đã bảo quản tủ lạnh nhiều ngày. Hãy ngửi kỹ mùi và DÙNG ĐŨA KIỂM TRA ĐỘ NHỚT. Nếu không có mùi chua lạ, phải ĐUN SÔI KỸ tối thiểu 5 phút (nhiệt độ tâm > 85°C) trước khi dùng.',
               probabilities: { fresh: 0.15, aging: 0.78, frozen_damaged: 0.04, spoiled: 0.03 },
               color_metrics: { avg_red: 175, avg_green: 110, avg_blue: 40, hue_degrees: 31, saturation_pct: 68, brightness_pct: 65, red_green_ratio: 1.59, freshness_index: 55 },
-              cv_inspection: { mold_ratio_pct: 0.0, white_ratio_pct: 22.4, dark_ratio_pct: 2.1, slime_detected: false, mold_threshold_exceeded: false, congealed_fat_exceeded: true, guardrail_verdict: 'Congealed Fat / Fridge Aging (Lớp mỡ đông trắng đục chiếm 22.4%)' },
-              safety_advice: { headline: 'Cần kiểm tra kỹ & Nấu sôi lại ngay', storage: 'Dùng hết trong ngày, không lưu cữu.', cooking: 'Đun sôi lại tối thiểu 5 phút.', risk_level: 'Trung bình (Cần hâm sôi kỹ)' },
+              cv_inspection: { mold_ratio_pct: 0.0, white_ratio_pct: 22.4, dark_ratio_pct: 2.1, slime_detected: false, mold_threshold_exceeded: false, congealed_fat_exceeded: true, guardrail_verdict: 'Congealed Fat / Fridge Aging - Lớp mỡ đông trắng đục chiếm 22.4%' },
+              safety_advice: { headline: 'Cần kiểm tra kỹ & Nấu sôi lại ngay', storage: 'Dùng hết trong ngày, không lưu cữu.', cooking: 'Đun sôi lại tối thiểu 5 phút.', risk_level: 'Trung bình - Cần hâm sôi kỹ' },
               model_mode: 'client_fallback_mode',
               inference_time_ms: 540
             });
@@ -275,7 +275,7 @@ export default function App() {
               sub_category: 'boiled_pork',
               meat_name_vn: 'Thịt luộc tươi mới',
               freshness_status: 'fresh',
-              status_title: 'Đạt chuẩn an toàn (Good / Safe)',
+              status_title: 'Đạt chuẩn an toàn',
               status_description: 'Món ăn có màu sắc tươi mới, bề mặt tự nhiên, không có dấu hiệu thiu hỏng hoặc nhớt mốc.',
               confidence: 93.0,
               risk_level: 'low',
@@ -319,9 +319,9 @@ export default function App() {
         const detectedMeat = hint || (isPork ? 'pork' : name.includes('beef') ? 'beef' : 'poultry');
 
         const meatNames = {
-          beef: 'Thịt bò tươi (Beef)',
-          pork: 'Thịt heo / lợn tươi sống (Pork)',
-          poultry: 'Gia cầm / Gà (Poultry)'
+          beef: 'Thịt bò tươi',
+          pork: 'Thịt heo / lợn tươi sống',
+          poultry: 'Gia cầm / Gà'
         };
 
         const indicators = status === 'fresh'
@@ -329,13 +329,13 @@ export default function App() {
               isPork
                 ? 'Màu hồng tươi tự nhiên kết hợp viền mỡ trắng đục đặc trưng của thịt heo tươi'
                 : 'Màu đỏ tươi đặc trưng của myoglobin tự nhiên',
-              'Đã tự động loại trừ nhánh rau thơm/ngò trang trí (nếu có)',
+              'Đã tự động loại trừ nhánh rau thơm/ngò trang trí nếu có',
               'Mô cơ săn chắc, đàn hồi tốt, bề mặt khô ráo không màng nhờn'
             ]
           : status === 'aging'
           ? ['Oxy hóa myoglobin thành metmyoglobin sẫm màu', 'Độ bóng tự nhiên suy giảm']
           : status === 'frozen_damaged'
-          ? ['Lớp tinh thể đá tuyết bám bề mặt', 'Mô xơ khô ráp do mất nước thăng hoa (Freezer Burn)']
+          ? ['Lớp tinh thể đá tuyết bám bề mặt', 'Mô xơ khô ráp do mất nước thăng hoa']
           : ['Diện tích thâm sẫm / biến chất hoại tử vượt ngưỡng', 'Dấu hiệu vi khuẩn phân hủy protein bề mặt'];
 
         resolve({
@@ -343,7 +343,7 @@ export default function App() {
           detected_type: 'raw',
           sub_category: detectedMeat,
           freshness_status: status,
-          status_title: status === 'fresh' ? 'Tươi ngon (Fresh)' : status === 'aging' ? 'Bắt đầu suy giảm (Half-Fresh / Aging)' : status === 'frozen_damaged' ? 'Cháy đông / Đá tuyết (Frozen Damaged)' : 'Ươn / Hỏng (Spoiled)',
+          status_title: status === 'fresh' ? 'Tươi ngon' : status === 'aging' ? 'Bắt đầu suy giảm' : status === 'frozen_damaged' ? 'Cháy đông / Đá tuyết' : 'Ươn / Hỏng',
           status_description: status === 'fresh' ? 'Thịt tươi ngon đạt chuẩn, mô cơ hồng hào tự nhiên, an toàn để chế biến tiêu thụ.' : status === 'aging' ? 'Thịt đã bắt đầu oxy hóa, giảm độ tươi. Cần chế biến ngay trong ngày.' : status === 'frozen_damaged' ? 'Thịt có dấu hiệu cháy đông hoặc đóng đá tuyết dày.' : 'Thịt đã biến chất, có dấu hiệu ươn hỏng. Tuyệt đối KHÔNG nên ăn.',
           confidence: confidence,
           risk_level: status === 'fresh' ? 'low' : status === 'spoiled' ? 'danger' : 'medium',
@@ -533,7 +533,7 @@ export default function App() {
           <div className="p-3.5 rounded-2xl bg-[#141b27] border border-amber-500/30 text-xs text-left flex items-start space-x-3 text-amber-300 shadow-md">
             <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <strong className="block font-semibold text-amber-200">Chế độ Mô phỏng Thông minh (Frontend Standalone)</strong>
+              <strong className="block font-semibold text-amber-200">Chế độ Mô phỏng Thông minh</strong>
               <span className="text-amber-300/90">
                 Backend FastAPI chưa kết nối tại <code className="bg-[#0B0F17] px-1 py-0.5 rounded text-amber-200 font-mono">http://localhost:8000</code>. MeatGuard đang tự động kích hoạt bộ giả lập quang học client để bạn vẫn có thể trải nghiệm đầy đủ giao diện và hiệu ứng quét laser ngay lúc này!
               </span>
@@ -595,7 +595,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Scan History (Recent 5 Scans) */}
+        {/* Scan History */}
         <ScanHistory
           history={history}
           onSelectHistoryItem={handleSelectHistoryItem}

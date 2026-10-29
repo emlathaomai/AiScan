@@ -20,22 +20,22 @@ export default function ScanHistory({ history, onSelectHistoryItem, onClearHisto
     switch (status) {
       case 'fresh':
         return {
-          label: 'Tươi (Fresh)',
+          label: 'Tươi',
           color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
         };
       case 'aging':
         return {
-          label: 'Cần nấu ngay (Aging)',
+          label: 'Cần nấu ngay',
           color: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
         };
       case 'frozen_damaged':
         return {
-          label: 'Cháy đông (Freeze)',
+          label: 'Cháy đông',
           color: 'bg-sky-500/10 text-sky-400 border-sky-500/20'
         };
       case 'spoiled':
         return {
-          label: 'Ươn / Hỏng (Spoiled)',
+          label: 'Ươn / Hỏng',
           color: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
         };
       default:
@@ -60,7 +60,7 @@ export default function ScanHistory({ history, onSelectHistoryItem, onClearHisto
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center space-x-2">
           <History className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-sm font-bold text-white">Lịch Sử Quét Gần Đây (Recent Scans)</h3>
+          <h3 className="text-sm font-bold text-white">Lịch Sử Quét Gần Đây</h3>
         </div>
         <button
           type="button"

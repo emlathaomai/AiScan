@@ -392,7 +392,7 @@ export default function CameraCapture({
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center space-x-2 shadow-lg shadow-emerald-600/30 transition-transform active:scale-95"
             >
               <Camera className="w-4 h-4" />
-              <span>Chụp ảnh (Camera sau)</span>
+              <span>Chụp ảnh</span>
             </button>
 
             {/* Live Camera Stream (Webcam / Mobile Browser) */}

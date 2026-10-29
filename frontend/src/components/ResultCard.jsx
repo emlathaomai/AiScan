@@ -188,7 +188,7 @@ export default function ResultCard({ result }) {
         <div className="p-4 sm:p-5 rounded-2xl bg-[#0B0F17]/70 border border-slate-800/80 space-y-2.5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
-            Dấu hiệu quang học nhận diện (Visual Indicators):
+            Dấu hiệu quang học nhận diện:
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
             {indicators_found.map((ind, i) => (
@@ -208,7 +208,7 @@ export default function ResultCard({ result }) {
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
             <Layers className="w-4 h-4 text-emerald-400" />
-            Phân bố xác suất phân loại (Confidence Bar)
+            Phân bố xác suất phân loại
           </h3>
           <span className="text-[11px] font-mono text-slate-400">
             {inference_time_ms ? `${inference_time_ms}ms` : 'Realtime'}
@@ -221,7 +221,7 @@ export default function ResultCard({ result }) {
             <div className="flex justify-between text-xs font-semibold mb-1">
               <span className="text-emerald-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                🟢 Tươi (Fresh)
+                🟢 Tươi
               </span>
               <span className="text-slate-200 font-mono">{pFresh}%</span>
             </div>
@@ -238,7 +238,7 @@ export default function ResultCard({ result }) {
             <div className="flex justify-between text-xs font-semibold mb-1">
               <span className="text-amber-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-400" />
-                🟡 Bắt đầu suy giảm (Half-Fresh / Aging)
+                🟡 Bắt đầu suy giảm
               </span>
               <span className="text-slate-200 font-mono">{pAging}%</span>
             </div>
@@ -255,7 +255,7 @@ export default function ResultCard({ result }) {
             <div className="flex justify-between text-xs font-semibold mb-1">
               <span className="text-sky-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-sky-400" />
-                ❄️ Cháy đông / Đá tuyết (Frozen Damaged)
+                ❄️ Cháy đông / Đá tuyết
               </span>
               <span className="text-slate-200 font-mono">{pFrozen}%</span>
             </div>
@@ -272,7 +272,7 @@ export default function ResultCard({ result }) {
             <div className="flex justify-between text-xs font-semibold mb-1">
               <span className="text-rose-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-rose-400" />
-                🔴 Ươn / Hỏng (Spoiled)
+                🔴 Ươn / Hỏng
               </span>
               <span className="text-slate-200 font-mono">{pSpoiled}%</span>
             </div>
@@ -292,7 +292,7 @@ export default function ResultCard({ result }) {
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
               <ThermometerSnowflake className="w-4 h-4 text-sky-400" />
-              Kiểm định quang học OpenCV (Ice & Spoilage Vision Guard)
+              Kiểm định quang học OpenCV
             </h3>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 font-semibold">
               HSV Thresholding
@@ -460,7 +460,7 @@ export default function ResultCard({ result }) {
         className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
       >
         <Award className="w-4 h-4 text-emerald-400" />
-        <span>Xem & Xuất Phiếu Kiểm Định Chất Lượng Số (PNG / PDF)</span>
+        <span>Xem & Xuất Phiếu Kiểm Định Chất Lượng Số</span>
       </button>
 
       {/* Colorimetric Spectroscopy Details (Collapsible/Informational) */}
@@ -469,7 +469,7 @@ export default function ResultCard({ result }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              Chỉ số quang phổ màu (Colorimetric Metrics):
+              Chỉ số quang phổ màu:
             </span>
             <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">
               {model_mode === 'onnx_model' ? 'Mô hình Deep Learning' : 'Heuristic Engine'}
@@ -478,15 +478,15 @@ export default function ResultCard({ result }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div className="p-2.5 rounded-xl bg-[#121824]/90 border border-slate-800">
-              <p className="text-[10px] text-slate-400 uppercase font-semibold">Tỷ lệ Đỏ/Xanh (R/G)</p>
+              <p className="text-[10px] text-slate-400 uppercase font-semibold">Tỷ lệ Đỏ/Xanh</p>
               <p className="text-sm font-bold text-slate-200 mt-0.5">{color_metrics.red_green_ratio}</p>
             </div>
             <div className="p-2.5 rounded-xl bg-[#121824]/90 border border-slate-800">
-              <p className="text-[10px] text-slate-400 uppercase font-semibold">Góc sắc thái (Hue)</p>
+              <p className="text-[10px] text-slate-400 uppercase font-semibold">Góc sắc thái</p>
               <p className="text-sm font-bold text-slate-200 mt-0.5">{color_metrics.hue_degrees}°</p>
             </div>
             <div className="p-2.5 rounded-xl bg-[#121824]/90 border border-slate-800">
-              <p className="text-[10px] text-slate-400 uppercase font-semibold">Độ bão hòa (Sat)</p>
+              <p className="text-[10px] text-slate-400 uppercase font-semibold">Độ bão hòa</p>
               <p className="text-sm font-bold text-slate-200 mt-0.5">{color_metrics.saturation_pct}%</p>
             </div>
             <div className="p-2.5 rounded-xl bg-[#121824]/90 border border-slate-800">

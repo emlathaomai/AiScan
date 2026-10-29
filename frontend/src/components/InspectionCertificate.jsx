@@ -89,7 +89,7 @@ export default function InspectionCertificate({
 
   const {
     freshness_status = 'fresh',
-    status_title = 'Tươi ngon (Fresh)',
+    status_title = 'Tươi ngon',
     confidence = 98,
     detected_meat = 'beef',
     meat_name_vn = 'Thịt Bò',
@@ -106,7 +106,7 @@ export default function InspectionCertificate({
   // Grade & Stamp Configuration
   const certGrade = {
     fresh: {
-      grade: 'HẠNG A (GRADE A)',
+      grade: 'HẠNG A',
       title: 'ĐẠT CHUẨN AN TOÀN',
       subtitle: 'Tươi mới tự nhiên - An tâm tiêu thụ',
       badgeBg: 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400',
@@ -118,9 +118,9 @@ export default function InspectionCertificate({
       ribbonText: 'MEATGUARD CERTIFIED SAFE'
     },
     aging: {
-      grade: 'HẠNG B (GRADE B)',
+      grade: 'HẠNG B',
       title: 'CHÚ Ý - CHẾ BIẾN NGAY',
-      subtitle: 'Bắt đầu lão hóa - Cần nấu chín kỹ (>85°C)',
+      subtitle: 'Bắt đầu lão hóa - Cần nấu chín kỹ trên 85°C',
       badgeBg: 'bg-amber-500/10 border-amber-500/40 text-amber-400',
       stampBorder: 'border-amber-500',
       stampText: 'text-amber-400',
@@ -130,7 +130,7 @@ export default function InspectionCertificate({
       ribbonText: 'EAT SOON - HANDLE WITH CARE'
     },
     frozen_damaged: {
-      grade: 'HẠNG C (GRADE C)',
+      grade: 'HẠNG C',
       title: 'CHÁY ĐÔNG / ĐÓNG ĐÁ',
       subtitle: 'Mất nước protein - Suy giảm dưỡng chất',
       badgeBg: 'bg-sky-500/10 border-sky-500/40 text-sky-400',
@@ -142,7 +142,7 @@ export default function InspectionCertificate({
       ribbonText: 'FREEZER BURN INSPECTED'
     },
     spoiled: {
-      grade: 'HẠNG F (GRADE F)',
+      grade: 'HẠNG F',
       title: 'CẢNH BÁO - NGUY CƠ HỎNG',
       subtitle: 'Nhiễm khuẩn / Đổi màu - Tuyệt đối không ăn',
       badgeBg: 'bg-rose-500/10 border-rose-500/40 text-rose-400',
@@ -227,8 +227,8 @@ export default function InspectionCertificate({
           if (navigator.canShare({ files: [file] })) {
             setExportMessage('Đang mở khay chia sẻ...');
             await navigator.share({
-              title: `Phiếu Kiểm Định Chất Lượng ${meat_name_vn} (${certId})`,
-              text: `Kết quả kiểm định chất lượng thực phẩm từ MeatGuard AI: ${certGrade.title} (${confidence}%)`,
+              title: `Phiếu Kiểm Định Chất Lượng ${meat_name_vn} - ${certId}`,
+              text: `Kết quả kiểm định chất lượng thực phẩm từ MeatGuard AI: ${certGrade.title} - ${confidence}%`,
               files: [file]
             });
             setIsExporting(false);
@@ -368,7 +368,7 @@ export default function InspectionCertificate({
             title="Lưu ảnh hoặc chia sẻ qua Zalo/Story"
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>Lưu ảnh (PNG)</span>
+            <span>Lưu ảnh</span>
           </button>
 
           <button
@@ -594,7 +594,7 @@ export default function InspectionCertificate({
                 {recommendation && (
                   <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
                     <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">
-                      Khuyến Cáo Chế Biến & Bảo Quản (Chef & Safety Advice)
+                      Khuyến Cáo Chế Biến & Bảo Quản
                     </span>
                     <p className="text-[11px] text-slate-300 leading-relaxed">{recommendation}</p>
                   </div>
