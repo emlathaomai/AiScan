@@ -86,26 +86,50 @@ class MeatFreshnessAnalyzer:
     def _infer_with_heuristic(self, resized_img: Image.Image, meat_hint: Optional[str] = None) -> Dict[str, Any]:
         """
         Biometric / Colorimetric evaluation handling 4 states including Freezer Burn.
+        Integrated with morphological feature segmentation for raw pink flesh, fat rim, and garnish.
         """
+        features = self.segment_meat_features(resized_img)
+        raw_pink_r = features.get("raw_pink_ratio", 0.0)
+        fat_r = features.get("fat_ratio", 0.0)
+        garnish_r = features.get("garnish_ratio", 0.0)
+        garnish_detected = features.get("garnish_detected", False)
+
         img_array = np.array(resized_img, dtype=np.float32) / 255.0  # (224, 224, 3)
 
         h, w, _ = img_array.shape
         margin_h, margin_w = int(h * 0.20), int(w * 0.20)
         core_patch = img_array[margin_h:h - margin_h, margin_w:w - margin_w]
 
-        r_mean = float(np.mean(core_patch[:, :, 0]))
-        g_mean = float(np.mean(core_patch[:, :, 1]))
-        b_mean = float(np.mean(core_patch[:, :, 2]))
+        # Exclude garnish from core patch color calculations
+        garnish_mask = features.get("garnish_mask")
+        if garnish_mask is not None and garnish_detected:
+            core_garnish = garnish_mask[margin_h:h - margin_h, margin_w:w - margin_w]
+            meat_pixels = core_patch[core_garnish == 0]
+            if len(meat_pixels) > 50:
+                r_mean = float(np.mean(meat_pixels[:, 0]))
+                g_mean = float(np.mean(meat_pixels[:, 1]))
+                b_mean = float(np.mean(meat_pixels[:, 2]))
+            else:
+                r_mean = float(np.mean(core_patch[:, :, 0]))
+                g_mean = float(np.mean(core_patch[:, :, 1]))
+                b_mean = float(np.mean(core_patch[:, :, 2]))
+        else:
+            r_mean = float(np.mean(core_patch[:, :, 0]))
+            g_mean = float(np.mean(core_patch[:, :, 1]))
+            b_mean = float(np.mean(core_patch[:, :, 2]))
 
         h_val, s_val, v_val = colorsys.rgb_to_hsv(r_mean, g_mean, b_mean)
         hue_degrees = h_val * 360.0
 
         rg_ratio = (r_mean + 1e-4) / (g_mean + 1e-4)
+        rb_ratio = (r_mean + 1e-4) / (b_mean + 1e-4)
 
         # Detect Meat Type
         detected_meat = meat_hint if meat_hint in ["beef", "pork", "poultry"] else None
         if not detected_meat:
-            if v_val > 0.65 and r_mean < 0.70 and s_val < 0.40:
+            if raw_pink_r >= 0.20 and (fat_r >= 0.10 or rb_ratio < 2.5 or s_val < 0.45):
+                detected_meat = "pork"
+            elif v_val > 0.65 and r_mean < 0.70 and s_val < 0.40:
                 detected_meat = "poultry"
             elif r_mean > 0.55 and rg_ratio > 1.35 and s_val > 0.38:
                 detected_meat = "beef"
@@ -115,26 +139,27 @@ class MeatFreshnessAnalyzer:
         # Check for Frost / Ice crystals / Freezer Burn
         # High-brightness white frost pixels (R, G, B > 0.75, low saturation < 0.20)
         brightness_map = np.mean(core_patch, axis=2)
-        frost_pixels = np.sum((brightness_map > 0.75) & (np.abs(core_patch[:, :, 0] - core_patch[:, :, 1]) < 0.12))
+        frost_pixels = np.sum((brightness_map > 0.78) & (np.abs(core_patch[:, :, 0] - core_patch[:, :, 1]) < 0.10))
         frost_ratio = frost_pixels / float(core_patch.shape[0] * core_patch.shape[1])
 
         # Evaluate states
-        is_red_hue = (hue_degrees >= 340 or hue_degrees <= 22)
+        is_red_hue = (hue_degrees >= 335 or hue_degrees <= 22)
         is_brown_hue = (22 < hue_degrees <= 45)
         is_green_or_abnormal = (45 < hue_degrees <= 160)
 
         # Baseline probabilities
-        if frost_ratio > 0.20 or (v_val > 0.70 and s_val < 0.22 and rg_ratio < 1.25):
+        # Rule: If raw pink myoglobin is healthy (>= 0.20), natural white fat rim is NOT freezer burn!
+        if (frost_ratio > 0.22 and raw_pink_r < 0.15) or (v_val > 0.75 and s_val < 0.18 and rg_ratio < 1.15 and raw_pink_r < 0.15):
             status = "frozen_damaged"
             p_frozen = 0.85
             p_aging = 0.08
             p_fresh = 0.05
             p_spoiled = 0.02
-        elif is_red_hue and rg_ratio >= 1.25 and s_val >= 0.28:
+        elif raw_pink_r >= 0.20 or (is_red_hue and rg_ratio >= 1.20 and s_val >= 0.25):
             status = "fresh"
-            p_fresh = 0.92
-            p_aging = 0.05
-            p_frozen = 0.02
+            p_fresh = 0.94
+            p_aging = 0.04
+            p_frozen = 0.01
             p_spoiled = 0.01
         elif is_brown_hue or (rg_ratio < 1.25 and rg_ratio >= 1.05):
             status = "aging"
@@ -161,9 +186,26 @@ class MeatFreshnessAnalyzer:
             "frozen_damaged": p_frozen,
             "spoiled": p_spoiled
         }
-        confidence = round(probs[status] * 100.0, 1)
 
-        return self._format_result(status, confidence, probs, detected_meat, r_mean, g_mean, b_mean, hue_degrees, s_val, v_val, rg_ratio)
+        confidence = round(float(probs[status]) * 100.0, 1)
+
+        result = self._format_result(
+            status, confidence, probs, detected_meat,
+            r_mean, g_mean, b_mean, hue_degrees, s_val, v_val, rg_ratio
+        )
+
+        # Add custom indicators for pork with fat rim and garnish
+        if garnish_detected:
+            result["indicators_found"].append(
+                f"Đã tự động nhận diện và loại trừ nhánh rau thơm/ngò trang trí ({round(garnish_r * 100, 1)}%)"
+            )
+        if detected_meat == "pork" and fat_r >= 0.10 and status == "fresh":
+            result["indicators_found"].insert(
+                0,
+                f"Màu hồng tươi tự nhiên ({round(raw_pink_r * 100, 1)}%) kết hợp viền mỡ trắng đục tự nhiên của thịt heo tươi"
+            )
+
+        return result
 
     def _format_result(self, status, confidence, probs, detected_meat, r_mean, g_mean, b_mean, hue_degrees, s_val, v_val, rg_ratio):
         status_titles = {
@@ -348,54 +390,194 @@ class MeatFreshnessAnalyzer:
                 "guardrail_verdict": None
             }
 
-    def classify_raw_vs_cooked(self, resized_img: Image.Image) -> Tuple[str, float]:
+    def segment_meat_features(self, resized_img: Image.Image) -> Dict[str, Any]:
         """
-        Classifies whether an image is raw meat or cooked/processed meat based on
-        biochemical optical properties (denatured metmyoglobin, caramelization vs raw myoglobin).
+        Detailed morphological & spectral feature segmentation:
+        1. Garnish/Herbs (ngò, hành, xà lách) via chlorophyll dominance.
+        2. Raw pink/red myoglobin flesh (thớ thịt cơ tươi sống).
+        3. Natural white/cream fat (mỡ tươi tự nhiên).
+        4. Caramel/braised/roasted cooked surface (màu cánh gián, vàng nâu).
+        5. Boiled/denatured pale meat (thịt luộc chín tái).
         """
-        img_np = np.array(resized_img, dtype=np.float32) / 255.0
-        h, w, _ = img_np.shape
-        margin_h, margin_w = int(h * 0.15), int(w * 0.15)
-        core = img_np[margin_h:h - margin_h, margin_w:w - margin_w]
-
-        r_mean = float(np.mean(core[:, :, 0]))
-        g_mean = float(np.mean(core[:, :, 1]))
-        b_mean = float(np.mean(core[:, :, 2]))
-
-        h_val, s_val, v_val = colorsys.rgb_to_hsv(r_mean, g_mean, b_mean)
-        hue_deg = h_val * 360.0
-        rg_ratio = (r_mean + 1e-4) / (g_mean + 1e-4)
-
-        # Raw characteristics:
-        # High red content, vivid red hue (near 0 or 340-360), high R/G ratio > 1.35, Saturation > 0.28
-        is_raw_hue = (hue_deg >= 340.0 or hue_deg <= 18.0)
-        is_raw_color = (is_raw_hue and rg_ratio >= 1.35 and s_val >= 0.28)
-
-        # Cooked characteristics:
-        # Caramel, brown, golden (Hue 20 - 55), or pale boiled beige/cream with lower saturation
-        is_cooked_hue = (20.0 <= hue_deg <= 55.0)
-        is_boiled_pale = (s_val < 0.28 and v_val > 0.50 and rg_ratio < 1.30)
-        is_processed_pale = (s_val < 0.30 and rg_ratio < 1.35)
-
-        if is_raw_color:
-            p_raw = min(0.96, 0.65 + (rg_ratio - 1.35) * 0.25 + s_val * 0.2)
-            return "raw", round(p_raw * 100.0, 1)
-        elif is_cooked_hue or is_boiled_pale or is_processed_pale:
-            p_cooked = 0.92 if is_cooked_hue else 0.88
-            return "cooked", round(p_cooked * 100.0, 1)
-        else:
-            if rg_ratio > 1.25 and (hue_deg <= 25 or hue_deg >= 335):
-                return "raw", 75.0
+        try:
+            import cv2
+            img_np = np.array(resized_img)
+            if len(img_np.shape) == 2:
+                img_bgr = cv2.cvtColor(img_np, cv2.COLOR_GRAY2BGR)
+            elif img_np.shape[2] == 4:
+                img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGBA2BGR)
             else:
-                return "cooked", 75.0
+                img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+            hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+            b = img_bgr[:, :, 0].astype(np.float32)
+            g = img_bgr[:, :, 1].astype(np.float32)
+            r = img_bgr[:, :, 2].astype(np.float32)
+            h = hsv[:, :, 0]
+            s = hsv[:, :, 1]
+            v = hsv[:, :, 2]
+
+            total_pixels = float(hsv.shape[0] * hsv.shape[1])
+
+            # 1. Garnish (rau thơm, ngò tây, hành lá):
+            # Plant chlorophyll green: H in [32, 88] (approx 64° - 176° in 360°),
+            # Saturation >= 85, Brightness >= 40.
+            # Biological dominance: Green channel is significantly higher than Red and Blue (G > R * 1.45, G > B * 1.30)
+            garnish_cond = (
+                (h >= 32) & (h <= 88) &
+                (s >= 85) & (v >= 40) &
+                (g > r * 1.45) & (g > b * 1.30)
+            )
+            garnish_mask = garnish_cond.astype(np.uint8) * 255
+            garnish_ratio = float(np.sum(garnish_mask == 255) / total_pixels)
+
+            # 2. Raw Pink / Red Myoglobin Flesh:
+            # - Red hue: H in [0, 9] or [168, 180] (OpenCV 0-180), S >= 35, V >= 55, R > G
+            # - Pink pork tone: H in [165, 180] or (H <= 11 and R/B < 2.6 and R > G + 15), S >= 30, V >= 60
+            r_b_ratio = (r + 1e-4) / (b + 1e-4)
+            r_g_ratio = (r + 1e-4) / (g + 1e-4)
+
+            is_crimson_red = ((h <= 9) | (h >= 168)) & (s >= 35) & (v >= 55) & (r > g)
+            is_pork_pink = (
+                ((h >= 165) | ((h <= 11) & (r_b_ratio < 2.6))) &
+                (s >= 30) & (v >= 60) &
+                (r >= 135) & (r - g >= 15) & (r - b >= 10)
+            )
+            raw_pink_cond = (is_crimson_red | is_pork_pink) & (~garnish_cond)
+            raw_pink_mask = raw_pink_cond.astype(np.uint8) * 255
+            raw_pink_ratio = float(np.sum(raw_pink_mask == 255) / total_pixels)
+
+            # 3. Natural White Fat Rim:
+            fat_cond = (
+                (s < 45) & (v >= 170) &
+                (np.abs(r - g) < 28) & (np.abs(r - b) < 32) &
+                (~raw_pink_cond) & (~garnish_cond)
+            )
+            fat_mask = fat_cond.astype(np.uint8) * 255
+            fat_ratio = float(np.sum(fat_mask == 255) / total_pixels)
+
+            # 4. Cooked Caramel / Braised / Roasted:
+            # Hue in [12, 26] (OpenCV 0-180 = 24° - 52° in 360°), S >= 50, R/B ratio >= 2.2, R > G > B
+            caramel_cond = (
+                (h >= 12) & (h <= 26) &
+                (s >= 50) & (r_b_ratio >= 2.2) &
+                (r > g) & (g > b) &
+                (~raw_pink_cond) & (~garnish_cond)
+            )
+            caramel_mask = caramel_cond.astype(np.uint8) * 255
+            caramel_ratio = float(np.sum(caramel_mask == 255) / total_pixels)
+
+            # 5. Boiled Pale Cooked Meat:
+            # Desaturated S in [15, 45], V in [110, 220], no pink, no caramel, no garnish
+            boiled_cond = (
+                (s >= 15) & (s <= 48) &
+                (v >= 110) & (v <= 225) &
+                (~raw_pink_cond) & (~caramel_cond) & (~garnish_cond) & (~fat_cond)
+            )
+            boiled_mask = boiled_cond.astype(np.uint8) * 255
+            boiled_ratio = float(np.sum(boiled_mask == 255) / total_pixels)
+
+            return {
+                "garnish_mask": garnish_mask,
+                "garnish_ratio": garnish_ratio,
+                "garnish_detected": bool(garnish_ratio > 0.015),
+                "raw_pink_mask": raw_pink_mask,
+                "raw_pink_ratio": raw_pink_ratio,
+                "fat_mask": fat_mask,
+                "fat_ratio": fat_ratio,
+                "caramel_mask": caramel_mask,
+                "caramel_ratio": caramel_ratio,
+                "boiled_mask": boiled_mask,
+                "boiled_ratio": boiled_ratio
+            }
+        except Exception as e:
+            print(f"[MeatGuard] Feature segmentation error: {e}")
+            return {
+                "garnish_mask": None,
+                "garnish_ratio": 0.0,
+                "garnish_detected": False,
+                "raw_pink_mask": None,
+                "raw_pink_ratio": 0.0,
+                "fat_mask": None,
+                "fat_ratio": 0.0,
+                "caramel_mask": None,
+                "caramel_ratio": 0.0,
+                "boiled_mask": None,
+                "boiled_ratio": 0.0
+            }
+
+    def classify_raw_vs_cooked(self, resized_img: Image.Image) -> Tuple[str, float, Dict[str, Any]]:
+        """
+        Classifies whether an image is raw meat or cooked/processed meat:
+        Rule 1: If raw pink/red myoglobin ratio >= 0.25 (or > 30% of meat surface),
+                MANDATORY classification as 'raw' (Raw Meat), NEVER Boiled Meat.
+        Rule 2: Garnish greens are excluded from color calculations and mold detection.
+        Rule 3: Confidence calibration - If ambiguous/borderline, cap confidence <= 78% (never > 90%).
+        """
+        features = self.segment_meat_features(resized_img)
+        pink_r = features.get("raw_pink_ratio", 0.0)
+        fat_r = features.get("fat_ratio", 0.0)
+        caramel_r = features.get("caramel_ratio", 0.0)
+        boiled_r = features.get("boiled_ratio", 0.0)
+        garnish_r = features.get("garnish_ratio", 0.0)
+        garnish_detected = features.get("garnish_detected", False)
+
+        # 1. Rule 1: MANDATORY Raw Meat if pink/red myoglobin >= 0.20
+        # Or pink + white fat combined (pork belly / pork slice with fat rim) where pink >= 0.15
+        if pink_r >= 0.20 or (pink_r >= 0.15 and fat_r >= 0.10):
+            confidence = min(96.0, 78.0 + pink_r * 35.0)
+            return "raw", round(confidence, 1), {
+                "raw_pink_ratio_pct": round(pink_r * 100, 1),
+                "fat_ratio_pct": round(fat_r * 100, 1),
+                "garnish_ratio_pct": round(garnish_r * 100, 1),
+                "garnish_detected": garnish_detected,
+                "is_uncertain": False
+            }
+
+        # 2. Cooked Meat: When virtually NO raw pink myoglobin is detected (< 0.08)
+        if pink_r < 0.08:
+            # 2a. Caramel cooked meat (Thịt kho, rim, chiên, nướng)
+            if caramel_r >= 0.25:
+                confidence = min(95.0, 75.0 + caramel_r * 35.0)
+                return "cooked", round(confidence, 1), {
+                    "caramel_ratio_pct": round(caramel_r * 100, 1),
+                    "garnish_ratio_pct": round(garnish_r * 100, 1),
+                    "garnish_detected": garnish_detected,
+                    "is_uncertain": False
+                }
+
+            # 2b. Boiled cooked meat (Thịt luộc, giò chả - pale denatured surface)
+            if boiled_r >= 0.25 or fat_r >= 0.35 or (caramel_r + boiled_r >= 0.25):
+                confidence = min(93.0, 72.0 + (boiled_r + fat_r) * 20.0)
+                return "cooked", round(confidence, 1), {
+                    "boiled_ratio_pct": round(boiled_r * 100, 1),
+                    "garnish_ratio_pct": round(garnish_r * 100, 1),
+                    "garnish_detected": garnish_detected,
+                    "is_uncertain": False
+                }
+
+        # 3. Rule 3: Borderline / Ambiguous Classification (0.08 <= pink_r < 0.20)
+        # Neither raw pink nor cooked caramel/boiled strongly dominates:
+        # Cap confidence strictly at 74% (never > 90%), mark as uncertain!
+        category = "raw" if pink_r >= 0.12 else "cooked"
+        return category, 74.0, {
+            "raw_pink_ratio_pct": round(pink_r * 100, 1),
+            "fat_ratio_pct": round(fat_r * 100, 1),
+            "caramel_ratio_pct": round(caramel_r * 100, 1),
+            "boiled_ratio_pct": round(boiled_r * 100, 1),
+            "garnish_ratio_pct": round(garnish_r * 100, 1),
+            "garnish_detected": garnish_detected,
+            "is_uncertain": True
+        }
 
     def detect_cooked_defects(self, img_pil: Image.Image) -> Dict[str, Any]:
         """
         OpenCV inspection tailored for cooked and processed meat:
-        1. Green/cyan mold spores (HSV H: 35-95, S: 30-255, V: 30-220)
-        2. Congealed white fat / White fungal fuzz (HSV H: 0-180, S: 0-40, V: 195-255)
-        3. Dark rot / necrotic discoloration (HSV H: 0-180, S: 0-255, V: 0-55)
-        4. Slime / bacterial film reflection analysis
+        1. Garnish detection & exclusion (rau thơm, ngò, hành) - NEVER counted as mold!
+        2. True green/cyan mold spores (HSV H: 38-92, S: 28-110, V: 30-185, NOT chlorophyll)
+        3. Congealed white fat / White fungal fuzz (HSV H: 0-180, S: 0-35, V: 215-255)
+        4. Dark rot / necrotic discoloration (HSV H: 0-180, S: 0-255, V: 0-55)
+        5. Slime / bacterial film reflection analysis
         """
         try:
             import cv2
@@ -408,33 +590,52 @@ class MeatFreshnessAnalyzer:
                 img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
             hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+            b = img_bgr[:, :, 0].astype(np.float32)
+            g = img_bgr[:, :, 1].astype(np.float32)
+            r = img_bgr[:, :, 2].astype(np.float32)
+            h = hsv[:, :, 0]
+            s = hsv[:, :, 1]
+            v = hsv[:, :, 2]
 
-            # 1. Mold mask (Green / olive / teal mold colonies)
-            lower_mold = np.array([35, 30, 30])
-            upper_mold = np.array([95, 255, 220])
-            mold_mask = cv2.inRange(hsv, lower_mold, upper_mold)
-            mold_ratio = float(np.sum(mold_mask == 255) / mold_mask.size)
+            total_size = float(hsv.shape[0] * hsv.shape[1])
 
-            # 2. Congealed fat / White mold fuzz mask (Stark chalky white or congealed lard crust)
-            lower_white = np.array([0, 0, 230])
-            upper_white = np.array([180, 30, 255])
-            white_mask = cv2.inRange(hsv, lower_white, upper_white)
-            white_ratio = float(np.sum(white_mask == 255) / white_mask.size)
+            # 0. Garnish mask (Chlorophyll green)
+            garnish_cond = (
+                (h >= 32) & (h <= 88) &
+                (s >= 85) & (v >= 40) &
+                (g > r * 1.45) & (g > b * 1.30)
+            )
+            garnish_mask = garnish_cond.astype(np.uint8) * 255
+            garnish_ratio = float(np.sum(garnish_mask == 255) / total_size)
+
+            # 1. True Mold mask (dull, powdery grayish-olive, teal, cyan):
+            # Crucial: MUST NOT be leafy garnish!
+            lower_mold = np.array([38, 28, 30])
+            upper_mold = np.array([92, 110, 185])
+            candidate_mold = cv2.inRange(hsv, lower_mold, upper_mold)
+            clean_mold_mask = candidate_mold & (~garnish_mask)
+            mold_ratio = float(np.sum(clean_mold_mask == 255) / total_size)
+
+            # 2. Congealed fat / White mold fuzz mask
+            lower_white = np.array([0, 0, 220])
+            upper_white = np.array([180, 35, 255])
+            white_mask = cv2.inRange(hsv, lower_white, upper_white) & (~garnish_mask)
+            white_ratio = float(np.sum(white_mask == 255) / total_size)
 
             # 3. Dark rot / necrosis
             lower_dark = np.array([0, 0, 0])
             upper_dark = np.array([180, 255, 55])
-            dark_mask = cv2.inRange(hsv, lower_dark, upper_dark)
-            dark_ratio = float(np.sum(dark_mask == 255) / dark_mask.size)
+            dark_mask = cv2.inRange(hsv, lower_dark, upper_dark) & (~garnish_mask)
+            dark_ratio = float(np.sum(dark_mask == 255) / total_size)
 
-            # 4. Slime detection: specular highlights on abnormal background
+            # 4. Slime detection
             gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             glare_pixels = np.sum(gray > 240) / gray.size
             slime_detected = bool(glare_pixels > 0.08 and (mold_ratio > 0.015 or dark_ratio > 0.15))
 
             verdict = None
             if mold_ratio > 0.02:
-                verdict = f"Mold Detected (Phát hiện đốm nấm mốc xanh/trắng {round(mold_ratio*100, 1)}%)"
+                verdict = f"Mold Detected (Phát hiện đốm nấm mốc xanh {round(mold_ratio*100, 1)}%)"
             elif slime_detected:
                 verdict = "Bacterial Slime (Phát hiện màng nhớt dịch bóng dính bất thường)"
             elif white_ratio > 0.18:
@@ -444,6 +645,8 @@ class MeatFreshnessAnalyzer:
 
             return {
                 "mold_ratio_pct": round(mold_ratio * 100.0, 1),
+                "garnish_ratio_pct": round(garnish_ratio * 100.0, 1),
+                "garnish_detected": bool(garnish_ratio > 0.015),
                 "white_ratio_pct": round(white_ratio * 100.0, 1),
                 "dark_ratio_pct": round(dark_ratio * 100.0, 1),
                 "slime_detected": slime_detected,
@@ -456,6 +659,8 @@ class MeatFreshnessAnalyzer:
             print(f"[MeatGuard] OpenCV cooked inspection warning: {e}")
             return {
                 "mold_ratio_pct": 0.0,
+                "garnish_ratio_pct": 0.0,
+                "garnish_detected": False,
                 "white_ratio_pct": 0.0,
                 "dark_ratio_pct": 0.0,
                 "slime_detected": False,
@@ -469,16 +674,45 @@ class MeatFreshnessAnalyzer:
         """
         Specialized evaluation engine for Cooked and Processed Meat:
         Evaluates Braised, Boiled, Fried/Grilled, and Processed (Sausage/Giò chả).
+        Includes Rule 1 safeguard against classifying fresh raw pork as cooked.
         """
         start_time = time.time()
+
+        # Rule 1 Safeguard: If the meat exhibits raw pink myoglobin >= 0.25 (or > 30% area)
+        features = self.segment_meat_features(resized_img)
+        if features.get("raw_pink_ratio", 0.0) >= 0.25 or (features.get("raw_pink_ratio", 0.0) >= 0.18 and features.get("fat_ratio", 0.0) >= 0.12):
+            print(f"[MeatGuard] Overruling cooked categorization: Raw pink myoglobin ({round(features['raw_pink_ratio']*100, 1)}%) detected!")
+            raw_res = self._infer_with_heuristic(resized_img, meat_hint="pork")
+            raw_res["detected_type"] = "raw"
+            raw_res["indicators_found"].insert(
+                0,
+                f"Phát hiện dải cơ màu hồng tươi tự nhiên của thịt sống ({round(features['raw_pink_ratio']*100, 1)}% diện tích). Đã tự động phân loại đúng vào nhóm Thịt Sống."
+            )
+            return raw_res
+
         img_array = np.array(resized_img, dtype=np.float32) / 255.0
         h, w, _ = img_array.shape
         margin_h, margin_w = int(h * 0.15), int(w * 0.15)
         core = img_array[margin_h:h - margin_h, margin_w:w - margin_w]
 
-        r_mean = float(np.mean(core[:, :, 0]))
-        g_mean = float(np.mean(core[:, :, 1]))
-        b_mean = float(np.mean(core[:, :, 2]))
+        # Exclude garnish from core patch color calculations
+        garnish_mask = features.get("garnish_mask")
+        if garnish_mask is not None and features.get("garnish_detected", False):
+            core_garnish = garnish_mask[margin_h:h - margin_h, margin_w:w - margin_w]
+            meat_pixels = core[core_garnish == 0]
+            if len(meat_pixels) > 50:
+                r_mean = float(np.mean(meat_pixels[:, 0]))
+                g_mean = float(np.mean(meat_pixels[:, 1]))
+                b_mean = float(np.mean(meat_pixels[:, 2]))
+            else:
+                r_mean = float(np.mean(core[:, :, 0]))
+                g_mean = float(np.mean(core[:, :, 1]))
+                b_mean = float(np.mean(core[:, :, 2]))
+        else:
+            r_mean = float(np.mean(core[:, :, 0]))
+            g_mean = float(np.mean(core[:, :, 1]))
+            b_mean = float(np.mean(core[:, :, 2]))
+
         h_val, s_val, v_val = colorsys.rgb_to_hsv(r_mean, g_mean, b_mean)
         hue_degrees = h_val * 360.0
         rg_ratio = (r_mean + 1e-4) / (g_mean + 1e-4)
@@ -513,17 +747,18 @@ class MeatFreshnessAnalyzer:
         has_slime = cv_inspection["slime_detected"]
         has_dark_rot = cv_inspection["dark_threshold_exceeded"]
         has_congealed_fat = cv_inspection["congealed_fat_exceeded"]
+        garnish_detected = cv_inspection.get("garnish_detected", False)
 
-        # Hue distortion (shift to unnatural dull greenish-grey)
-        is_greenish_spoil = (55.0 <= hue_degrees <= 110.0 and s_val > 0.20)
+        # Hue distortion (shift to unnatural dull greenish-grey on meat, not plant garnish)
+        is_greenish_spoil = (55.0 <= hue_degrees <= 110.0 and s_val > 0.20 and not garnish_detected)
 
         if has_mold or has_slime or has_dark_rot or is_greenish_spoil:
             status = "spoiled"
-            confidence = 91.5 if has_mold else 88.0
+            confidence = 88.0 if has_mold else 85.0
             probs = {"fresh": 0.02, "aging": 0.08, "frozen_damaged": 0.02, "spoiled": 0.88}
             risk_level = "danger"
             indicators = [
-                "Phát hiện đốm nấm mốc trắng/xanh lá trên bề mặt" if has_mold else "Bề mặt có màng bóng nhờn dính nhớt bất thường",
+                "Phát hiện đốm nấm mốc xanh trên bề mặt" if has_mold else "Bề mặt có màng bóng nhờn dính nhớt bất thường",
                 "Màu sắc ngả xám chì / lên men ôi thiu do vi khuẩn",
                 "Nguy cơ cao sinh độc tố tụ cầu hoặc Bacillus cereus"
             ]
@@ -570,6 +805,12 @@ class MeatFreshnessAnalyzer:
             risk_title = "Thấp (An toàn)"
             status_title = "Đạt chuẩn an toàn (Good / Safe)"
             status_desc = "Món ăn có màu sắc tươi mới, bề mặt tự nhiên, không có dấu hiệu thiu hỏng hoặc nhớt mốc."
+
+        # Add garnish exclusion note
+        if garnish_detected:
+            indicators.append(
+                f"Đã tự động nhận diện và loại trừ nhánh rau thơm/ngò trang trí ({cv_inspection.get('garnish_ratio_pct', 0)}%), không tính vào chỉ số nấm mốc."
+            )
 
         return {
             "status": "success",
@@ -720,15 +961,29 @@ class MeatFreshnessAnalyzer:
             return self._analyze_raw(resized_img, normalized_np, meat_hint, start_time)
         else:
             # Auto-detect mode
-            detected_type, auto_conf = self.classify_raw_vs_cooked(resized_img)
+            detected_type, auto_conf, class_details = self.classify_raw_vs_cooked(resized_img)
             if detected_type == "cooked":
                 res = self.analyze_cooked_meat(resized_img, sub_hint=meat_hint)
-                res["auto_detected"] = True
-                res["auto_confidence"] = auto_conf
-                return res
             else:
                 res = self._analyze_raw(resized_img, normalized_np, meat_hint, start_time)
-                res["auto_detected"] = True
-                res["auto_confidence"] = auto_conf
-                return res
+
+            res["auto_detected"] = True
+            res["auto_confidence"] = auto_conf
+            res["classification_details"] = class_details
+
+            # Rule 3 Calibration: If classification was uncertain, calibrate confidence (<= 78%, never > 90%)
+            # and inject clear user guidance.
+            if class_details.get("is_uncertain", False):
+                res["confidence"] = min(res.get("confidence", 75.0), 78.0)
+                warning_msg = "Lưu ý phân loại: AI đang phân tích ở chế độ Tự động. Cần chọn đúng phân loại 'Thịt Sống' hoặc 'Thịt Chín' để có kết quả chính xác nhất."
+                if "indicators_found" in res and warning_msg not in res["indicators_found"]:
+                    res["indicators_found"].insert(0, warning_msg)
+                res["recommendation"] = f"Khuyến nghị: Để có kết quả kiểm định chuẩn xác nhất, bạn nên chuyển sang chọn trực tiếp tab [Thịt Sống] hoặc [Thịt Đã Nấu Chín]. {res.get('recommendation', '')}"
+
+            if class_details.get("garnish_detected", False):
+                garnish_msg = f"Đã tự động nhận diện và loại trừ nhánh rau thơm/ngò trang trí ({class_details.get('garnish_ratio_pct', 0)}%), không tính vào chỉ số nấm mốc."
+                if "indicators_found" in res and garnish_msg not in res["indicators_found"]:
+                    res["indicators_found"].append(garnish_msg)
+
+            return res
 
