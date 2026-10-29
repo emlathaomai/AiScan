@@ -3,10 +3,11 @@ import Navbar from './components/Navbar';
 import DisclaimerBanner from './components/DisclaimerBanner';
 import CameraCapture from './components/CameraCapture';
 import ResultCard from './components/ResultCard';
+import InspectionCertificate, { decodeCertPayload } from './components/InspectionCertificate';
 import SensoryChecklist from './components/SensoryChecklist';
 import ScanHistory from './components/ScanHistory';
 import GuideModal from './components/GuideModal';
-import { ShieldAlert, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
+import { ShieldAlert, Sparkles, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined
   ? import.meta.env.VITE_API_BASE_URL
@@ -39,8 +40,53 @@ export default function App() {
 
   // History state
   const [history, setHistory] = useState([]);
+  const [isVerifiedFromUrl, setIsVerifiedFromUrl] = useState(false);
 
   const resultRef = useRef(null);
+
+  // Check if opened via QR Code verification link (#cert=...)
+  useEffect(() => {
+    const handleHashCheck = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#cert=')) {
+        try {
+          const rawB64 = hash.replace('#cert=', '');
+          const payload = decodeCertPayload(rawB64);
+          if (payload && payload.id) {
+            const reconstructed = {
+              status: 'success',
+              certId: payload.id,
+              scannedAt: payload.date,
+              freshness_status: payload.status,
+              status_title: payload.title,
+              confidence: payload.conf,
+              meat_name_vn: payload.meat,
+              detected_type: payload.type || 'raw',
+              recommendation: payload.rec,
+              risk_level: payload.status === 'spoiled' ? 'danger' : payload.status === 'aging' ? 'medium' : 'low',
+              probabilities: {
+                fresh: payload.status === 'fresh' ? payload.conf / 100 : 0.05,
+                aging: payload.status === 'aging' ? payload.conf / 100 : 0.05,
+                frozen_damaged: payload.status === 'frozen_damaged' ? payload.conf / 100 : 0.05,
+                spoiled: payload.status === 'spoiled' ? payload.conf / 100 : 0.05,
+              }
+            };
+            setAnalysisResult(reconstructed);
+            setIsVerifiedFromUrl(true);
+            setTimeout(() => {
+              resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+          }
+        } catch (e) {
+          console.warn('Could not parse verification QR hash:', e);
+        }
+      }
+    };
+
+    handleHashCheck();
+    window.addEventListener('hashchange', handleHashCheck);
+    return () => window.removeEventListener('hashchange', handleHashCheck);
+  }, []);
 
   // 1. Load history from localStorage on mount
   useEffect(() => {
@@ -82,6 +128,20 @@ export default function App() {
   // 3. Save new scan to history (Max 5 items)
   const saveToHistory = (result, thumbnail) => {
     try {
+      if (!result.certId) {
+        result.certId = '#MG-2026-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+      }
+      if (!result.scannedAt) {
+        result.scannedAt = new Date().toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      }
+
       const newItem = {
         id: 'scan_' + Date.now(),
         timestamp: Date.now(),
@@ -456,6 +516,36 @@ export default function App() {
           </p>
         </div>
 
+        {/* QR Code Verification Banner */}
+        {isVerifiedFromUrl && (
+          <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-left flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-emerald-300 shadow-lg shadow-emerald-950/50 animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <strong className="block text-white font-bold">
+                  Phiếu Kiểm Định Chất Lượng Đã Xác Thực Nguồn Gốc
+                </strong>
+                <span className="text-[11px] text-emerald-300/90">
+                  Dữ liệu kiểm tra được xác nhận qua mã QR chính thức từ hệ thống MeatGuard AI.
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                window.location.hash = '';
+                setIsVerifiedFromUrl(false);
+                setAnalysisResult(null);
+                setImagePreview(null);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold whitespace-nowrap self-end sm:self-auto transition-colors"
+            >
+              Quét mẫu mới
+            </button>
+          </div>
+        )}
+
         {/* Disclaimer Banner */}
         <DisclaimerBanner />
 
@@ -507,6 +597,16 @@ export default function App() {
             <div className="space-y-6 pt-2">
               <ResultCard result={analysisResult} />
               
+              {/* Meat Quality Certificate & Inspection Report */}
+              <div id="inspection-certificate-view">
+                <InspectionCertificate
+                  result={analysisResult}
+                  imagePreview={imagePreview}
+                  certId={analysisResult.certId}
+                  isVerifiedFromUrl={isVerifiedFromUrl}
+                />
+              </div>
+
               {/* Sensory Cross-Checking Checklist */}
               <SensoryChecklist
                 aiStatus={analysisResult.freshness_status}

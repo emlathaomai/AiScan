@@ -10,7 +10,8 @@ import {
   Sparkles,
   Layers,
   ThermometerSnowflake,
-  Clock
+  Clock,
+  Award
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -448,6 +449,19 @@ export default function ResultCard({ result }) {
           </div>
         </div>
       )}
+
+      {/* Certificate Shortcut Button */}
+      <button
+        type="button"
+        onClick={() => {
+          const el = document.getElementById('inspection-certificate-view');
+          el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+        className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+      >
+        <Award className="w-4 h-4 text-emerald-400" />
+        <span>Xem & Xuất Phiếu Kiểm Định Chất Lượng Số (PNG / PDF)</span>
+      </button>
 
       {/* Colorimetric Spectroscopy Details (Collapsible/Informational) */}
       {color_metrics && (
